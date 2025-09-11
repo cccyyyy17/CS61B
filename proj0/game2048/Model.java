@@ -5,7 +5,7 @@ import java.util.Observable;
 
 
 /** The state of a game of 2048.
- *  @author TODO: YOUR NAME HERE
+ *  @author TODO: Wang From GuiZhou University
  */
 public class Model extends Observable {
     /** Current contents of the board. */
@@ -106,10 +106,27 @@ public class Model extends Observable {
      *    value, then the leading two tiles in the direction of motion merge,
      *    and the trailing tile does not.
      * */
+   public Tile seekNoEmptyTile(int col,int row,Board b){
+       if(row == board.size()) return null;
+       else if(board.tile(col,row)!=null)  return board.tile(col,row);
+       else return seekNoEmptyTile(col,row+1,b);
+   }
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
-
+        board.startViewingFrom(side);
+        int size =board.size();
+        for(int i=0;i<size;i++){
+            for(int j=0;j<size;j++){
+                Tile t=seekNoEmptyTile(j,size-i-1,board);
+                if(board.tile(i,j)==null&&t!=null) board.move(j,size-i,t );
+                else if(board.tile(j,size-i)!=null&&t!=null && t.value()==board.tile(j,size-i).value()){
+                    changed=board.move(j,size-i,t );
+                    score=board.tile(j,size-i).value();
+                }
+            }
+        }
+        //
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
