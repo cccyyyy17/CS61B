@@ -106,10 +106,10 @@ public class Model extends Observable {
      *    value, then the leading two tiles in the direction of motion merge,
      *    and the trailing tile does not.
      * */
-   public Tile seekNoEmptyTile(int col,int row,Board b){
-       if(row == board.size()) return null;
-       else if(board.tile(col,row)!=null)  return board.tile(col,row);
-       else return seekNoEmptyTile(col,row+1,b);
+   public Tile seekNoEmptyTile(int i,int j,Board b){
+       if(j == -1) return null;
+       else if(board.tile(i,j)!=null)  return board.tile(i,j);
+       else return seekNoEmptyTile(i,j-1,b);
    }
     public boolean tilt(Side side) {
         boolean changed;
@@ -117,12 +117,12 @@ public class Model extends Observable {
         board.startViewingFrom(side);
         int size =board.size();
         for(int i=0;i<size;i++){
-            for(int j=0;j<size;j++){
-                Tile t=seekNoEmptyTile(j,size-i-1,board);
-                if(board.tile(i,j)==null&&t!=null) board.move(j,size-i,t );
-                else if(board.tile(j,size-i)!=null&&t!=null && t.value()==board.tile(j,size-i).value()){
-                    changed=board.move(j,size-i,t );
-                    score=board.tile(j,size-i).value();
+            for(int j=3;j>0;j--){
+                Tile t=seekNoEmptyTile(i,j-1,board);
+                if(board.tile(i,j)==null&&t!=null) board.move(i,j,t );
+                else if(board.tile(i,j)!=null&&t!=null && t.value()==board.tile(i,j).value()){
+                    changed=board.move(i,j,t );
+                    score=board.tile(i,j).value();
                 }
             }
         }
