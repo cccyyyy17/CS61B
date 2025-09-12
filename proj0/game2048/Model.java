@@ -106,32 +106,57 @@ public class Model extends Observable {
      *    value, then the leading two tiles in the direction of motion merge,
      *    and the trailing tile does not.
      * */
-   public Tile seekNoEmptyTile(int i,int j,Board b){
-       if(j == -1) return null;
-       else if(board.tile(i,j)!=null)  return board.tile(i,j);
-       else return seekNoEmptyTile(i,j-1,b);
+   public Tile seekNoEmptyTile(int col,int row,Side side){
+       int pcol=side.col(col,row,size());
+       int prow=side.row(col,row,size());
+       if(prow== -1||prow==4||pcol==-1||pcol==4) return null;
+       else if(board.tile(col,row)!=null)  return board.tile(col,row);
+       else return seekNoEmptyTile(col,row-1,side);
    }
-    public boolean tilt(Side side) {
+   public boolean moveToTop(Side side){
+       int size =size();
+       boolean changed;
+       changed = false;
+       for(int col=0;col<size;col++){
+           for(int row=3;row>0;row--){
+               Tile t=seekNoEmptyTile(col,row-1,side);
+               if(board.tile(col,row)==null&&t!=null) {
+                   board.move(col,row,t );
+                   changed=true;
+               }
+           }
+       }
+       return changed;
+   }
+    public boolean merge(Side side){
         boolean changed;
         changed = false;
-        board.startViewingFrom(side);
-        int size =board.size();
-        for(int i=0;i<size;i++){
-            for(int j=3;j>0;j--){
-                Tile t=seekNoEmptyTile(i,j-1,board);
-                if(board.tile(i,j)==null&&t!=null) board.move(i,j,t );
-                else if(board.tile(i,j)!=null&&t!=null && t.value()==board.tile(i,j).value()){
-                    changed=board.move(i,j,t );
-                    score=board.tile(i,j).value();
+        int size =size();
+        for(int col=0;col<size;col++){
+            for(int row=3;row>0;row--){
+                Tile t=seekNoEmptyTile(col,row-1,side);
+                if(board.tile(col,row)!=null&&t!=null&&board.tile(col,row).value()==t.value())
+                {
+                 changed=board.move(col,row,t );
+                 score+=board.tile(col,row).value();
                 }
             }
         }
-        //
-        // TODO: Modify this.board (and perhaps this.score) to account
-        // for the tilt to the Side SIDE. If the board changed, set the
-        // changed local variable to true.
-
+        return changed;
+    }
+    // TODO: Modify this.board (and perhaps this.score) to account
+    // for the tilt to the Side SIDE. If the board changed, set the
+    // changed local variable to true.
+    public boolean tilt(Side side) {
+        boolean changed,changed1,changed2,changed3;
+        changed = false;
+        board.startViewingFrom(side);
+        changed1=moveToTop(side);
+        changed2=merge(side);
+        changed3=moveToTop(side);
         checkGameOver();
+        changed =changed1||changed2||changed3;
+        board.startViewingFrom(Side.NORTH);
         if (changed) {
             setChanged();
         }
