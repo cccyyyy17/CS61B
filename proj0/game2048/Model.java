@@ -150,6 +150,7 @@ public class Model extends Observable {
     public boolean tilt(Side side) {
         boolean changed,changed1,changed2,changed3;
         changed = false;
+
         board.startViewingFrom(side);
         changed1=moveToTop(side);
         changed2=merge(side);
