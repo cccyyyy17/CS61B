@@ -2,6 +2,7 @@ package timingtest;
 
 import edu.princeton.cs.algs4.StdRandom;
 import randomizedtest.AListNoResizing;
+import randomizedtest.BuggyAList;
 
 /** Array based list.
  *  @author Josh Hug
@@ -37,7 +38,7 @@ public class AList<Item> {
     /** Inserts X into the back of the list. */
     public void addLast(Item x) {
         if (size == items.length) {
-            resize(size +1);
+            resize(size *2);
         }
 
         items[size] = x;
@@ -65,23 +66,5 @@ public class AList<Item> {
         items[size - 1] = null;
         size = size - 1;
         return x;
-    }
-    public static void main(String[] args){
-        AListNoResizing<Integer> L = new AListNoResizing<>();
-
-        int N = 500;
-        for (int i = 0; i < N; i += 1) {
-            int operationNumber = StdRandom.uniform(0, 2);
-            if (operationNumber == 0) {
-                // addLast
-                int randVal = StdRandom.uniform(0, 100);
-                L.addLast(randVal);
-                System.out.println("addLast(" + randVal + ")");
-            } else if (operationNumber == 1) {
-                // size
-                int size = L.size();
-                System.out.println("size: " + size);
-            }
-        }
     }
 }
