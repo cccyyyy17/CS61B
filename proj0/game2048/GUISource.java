@@ -3,6 +3,7 @@ package game2048;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Random;
 
 /** A type of InputSource that receives commands from a GUI.
@@ -35,16 +36,16 @@ class GUISource implements InputSource {
     public String getKey() {
         String command = _source.readKey();
         switch (command) {
-            case "↑" :
+            case "向上箭头":case "↑" :
                 command = "Up";
                 break;
-            case "→" :
+            case "向右箭头":case "→" :
                 command = "Right";
                 break;
-            case "↓" :
+            case "向下箭头":case "↓" :
                 command = "Down";
                 break;
-            case "←" :
+            case "向左箭头":case "←" :
                 command = "Left";
                 break;
             default :

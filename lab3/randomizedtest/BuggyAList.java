@@ -38,7 +38,7 @@ public class BuggyAList<Item> {
         if (size == items.length) {
             resize(size * 2);
         }
-        items[size] = x;
+        items[size-1] = x;
         size = size + 1;
     }
 
