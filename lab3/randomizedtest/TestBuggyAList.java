@@ -22,14 +22,14 @@ public class TestBuggyAList {
                 System.out.println("addLast(" + randVal + ")");
             } else if (operationNumber == 1&& bug.size()!=0) {
                 L.getLast();
-                bug.getLast();
-                System.out.println("addLast(" + L.getLast() + ")");
+                int x=bug.getLast();
+                System.out.println("getLast(" + x + ")");
 
             }
             else if(operationNumber==2 && bug.size()!=0){
                 L.removeLast();
-                bug.removeLast();
-                System.out.println("addLast(" +  L.removeLast() + ")");
+                int x=bug.removeLast();
+                System.out.println("removeLast(" +  x + ")");
             }
         }
     }
