@@ -34,8 +34,9 @@ public class LinkedListDeque<T> implements Deque<T>{
     }
     public LinkedListDeque(){
         size =0;
-        first=new Node(null,null,last);
+        first=new Node(null,null,null);
         last=new Node(first,null,null);
+        first.next=last;
     }
 
     int size;
@@ -75,8 +76,9 @@ public class LinkedListDeque<T> implements Deque<T>{
         if(isEmpty()) return;
         Node p=first.next;
         while(p!=last) {
-            System.out.println(p.item);
-            System.out.println(" ");
+            System.out.print(p.item);
+            System.out.print(" ");
+            p=p.next;
         }
         System.out.println();
 
@@ -88,6 +90,7 @@ public class LinkedListDeque<T> implements Deque<T>{
         Node n= first.next;
         first.next=n.next;
         n.next.prev=first;
+        size-=1;
         return n.item;
     }
 
@@ -97,6 +100,7 @@ public class LinkedListDeque<T> implements Deque<T>{
        Node n=last.prev;
        last.prev=n.prev;
        n.prev.next=last;
+       size-=1;
        return n.item;
     }
 
