@@ -47,10 +47,13 @@ public class ArrayDequeTest {
         lld1.addFirst(10);
         // should not be empty
         assertFalse("lld1 should contain 1 item", lld1.isEmpty());
-
+        lld1.addFirst(9);
+        lld1.addFirst(8);
         lld1.removeFirst();
+        lld1.addLast(11);
+        lld1.addLast(12);
         // should be empty
-        assertTrue("lld1 should be empty after removal", lld1.isEmpty());
+        assertTrue("lld1 should be empty after removal", lld1.get(2)==11);
     }
 
     @Test

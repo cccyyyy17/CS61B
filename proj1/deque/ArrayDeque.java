@@ -7,7 +7,7 @@ public class ArrayDeque<T> implements Deque<T>{
     public void addFirst(T item) {
         if(size==Maxsize) resize(Maxsize*2);
         items[first]=item;
-        first=(first-1)%Maxsize;
+        first=(first-1+Maxsize)%Maxsize;
         size+=1;
     }
 
@@ -15,7 +15,7 @@ public class ArrayDeque<T> implements Deque<T>{
     public void addLast(T item) {
         if(size==Maxsize) resize(Maxsize*2);
         items[last]=item;
-        last=(last+1)%Maxsize;
+        last=(last+1+Maxsize)%Maxsize;
         size+=1;
     }
 
@@ -41,24 +41,24 @@ public class ArrayDeque<T> implements Deque<T>{
     @Override
     public T removeFirst() {
         if(size==0) return null;
-       first=(first+1)%Maxsize;
+       first=(first+1+Maxsize)%Maxsize;
        size-=1;
-       if(Maxsize/size >=4 &&size>50) resize(size*2);
+       if(size>50&&Maxsize/size >=4) resize(size*2);
        return items[first];
     }
 
     @Override
     public T removeLast() {
        if(size==0) return null;
-       last=(last-1)%Maxsize;
+       last=(last-1+Maxsize)%Maxsize;
        size-=1;
-        if(Maxsize/size >=4 &&size>50) resize(size*2);
+       if(size>50&&Maxsize/size >=4  ) resize(size*2);
        return items[last];
     }
 
     @Override
     public T get(int index) {
-        return items[index];
+        return items[(first+index+1+Maxsize)%Maxsize];
     }
 
     @Override
@@ -82,7 +82,7 @@ public class ArrayDeque<T> implements Deque<T>{
 
     public void resize(int capacity){
         T[] Newitems = (T[]) new Object[capacity];
-        for(int i=first, j=0;i!=last;i=(i+1)%Maxsize,j++){
+        for(int i=first, j=0;i!=last;i=(i+1+Maxsize)%Maxsize,j++){
             Newitems[j] =items[i];
         }
         items=Newitems;
