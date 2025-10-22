@@ -127,4 +127,34 @@ public class ArrayDequeTest {
         }
 
     }
+    @Test
+    public void testFillUpRemoveFillUpAgain() {
+        ArrayDeque<Integer> deque = new ArrayDeque<>();
+
+        // 第一阶段：插入一堆元素到前端
+        for (int i = 0; i < 1000; i++) {
+            deque.addFirst(i);
+        }
+
+        // 第二阶段：从前端移除所有元素
+        for (int i = 0; i < 1000; i++) {
+            Integer removed = deque.removeFirst();
+            assertEquals(Integer.valueOf(999 - i), removed); // 检查移除顺序
+        }
+
+        // 此时deque应该为空
+        assertTrue(deque.isEmpty());
+
+        // 第三阶段：重新插入元素到前端
+        for (int i = 0; i < 1000; i++) {
+            deque.addFirst(i);
+        }
+
+        // 第四阶段：再次移除并检查
+        for (int i = 0; i < 1000; i++) {
+            Integer removed = deque.removeFirst();
+            assertNotNull("Failed on " + i + "th removeFirst operation", removed);
+            assertEquals(Integer.valueOf(999 - i), removed);
+        }
+    }
 }

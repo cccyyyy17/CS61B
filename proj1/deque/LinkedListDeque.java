@@ -2,65 +2,80 @@ package deque;
 
 import java.util.Iterator;
 
-public class LinkedListDeque<T> implements Deque<T>{
+public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
-    public class Node{
-         T item;
-         Node prev;
-         Node next;
-        public Node(Node pre,T t,Node n){
-            this.prev=pre;
-            item=t;
-            next=n;
+    private class Node {
+        T item;
+        Node prev;
+        Node next;
+        public Node(Node pre, T t, Node n) {
+            this.prev = pre;
+            item = t;
+            next = n;
         }
     }
 
-    public class MyIterator implements  Iterator<T>{
+    private class MyIterator implements Iterator<T> {
         private int wizPos;
-        public  MyIterator(){
+        public MyIterator() {
             wizPos = 0;
         }
         @Override
         public boolean hasNext() {
-            return wizPos<size;
+            return wizPos < size;
         }
 
         @Override
         public T next() {
-            T returnItem=get(wizPos);
-            wizPos+=1;
+            T returnItem = get(wizPos);
+            wizPos += 1;
             return returnItem;
         }
     }
-    public LinkedListDeque(){
-        size =0;
-        first=new Node(null,null,null);
-        last=new Node(first,null,null);
-        first.next=last;
+
+    public LinkedListDeque() {
+        size = 0;
+        first = new Node(null, null, null);
+        last = new Node(first, null, null);
+        first.next = last;
     }
 
-    int size;
-    Node first;
-    Node last;
-
-
+    private int size;
+    private Node first;
+    private Node last;
 
     @Override
     public void addFirst(T item) {
-        Node node =new Node(first,item,first.next);
-        first.next.prev=node;
-        first.next=node;
-        size=size+1;
+        Node node = new Node(first, item, first.next);
+        first.next.prev = node;
+        first.next = node;
+        size = size + 1;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        // 先进行类型检验
+        if (o instanceof LinkedListDeque otherLinkListDeque) {
+            if (size != otherLinkListDeque.size()) {
+                return false;
+            }
+            for (int i = 0; get(i) != null; i++) {
+                if (otherLinkListDeque.get(i) != this.get(i)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override
     public void addLast(T item) {
-        Node node=new Node(last.prev,item,last);
-        last.prev.next=node;
-        last.prev=node;
-        size+=1;
+        Node node = new Node(last.prev, item, last);
+        last.prev.next = node;
+        last.prev = node;
+        size += 1;
     }
-
 
     @Override
     public int size() {
@@ -69,59 +84,74 @@ public class LinkedListDeque<T> implements Deque<T>{
 
     @Override
     public void printDeque() {
-        if(isEmpty()) return;
-        Node p=first.next;
-        while(p!=last) {
+        if (isEmpty()) {
+            return;
+        }
+        Node p = first.next;
+        while (p != last) {
             System.out.print(p.item);
             System.out.print(" ");
-            p=p.next;
+            p = p.next;
         }
         System.out.println();
-
     }
 
     @Override
     public T removeFirst() {
-        if(size==0 ) return null;
-        Node n= first.next;
-        first.next=n.next;
-        n.next.prev=first;
-        size-=1;
+        if (size == 0) {
+            return null;
+        }
+        Node n = first.next;
+        first.next = n.next;
+        n.next.prev = first;
+        size -= 1;
         return n.item;
     }
 
     @Override
     public T removeLast() {
-       if(size==0) return null;
-       Node n=last.prev;
-       last.prev=n.prev;
-       n.prev.next=last;
-       size-=1;
-       return n.item;
+        if (size == 0) {
+            return null;
+        }
+        Node n = last.prev;
+        last.prev = n.prev;
+        n.prev.next = last;
+        size -= 1;
+        return n.item;
     }
 
     @Override
     public T get(int index) {
-        Node n=first.next;
-        for(int i=0;i<size && n!=null;i++){
-            if( i==index) return n.item;
-            else n=n.next;
+        if (index == size) {
+            return null;
+        }
+        Node n = first.next;
+        for (int i = 0; i < size && n != null; i++) {
+            if (i == index) {
+                return n.item;
+            } else {
+                n = n.next;
+            }
         }
         return null;
     }
 
-
+    @Override
     public Iterator<T> iterator() {
         return new MyIterator();
     }
 
-    public Node MyGetRecursive (int index){
-        if(index<0) return null;
-        else if(index==0) return first.next;
-        else return MyGetRecursive(index-1).next;
-    }
-    public T getRecursive(int index){
-       return MyGetRecursive(index).item;
+    private Node myGetRecursive(int index) {
+        if (index < 0) {
+            return null;
+        } else if (index == 0) {
+            return first.next;
+        } else {
+            return myGetRecursive(index - 1).next;
+        }
     }
 
+    public T getRecursive(int index) {
+        return myGetRecursive(index).item;
+    }
 }
