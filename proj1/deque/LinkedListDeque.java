@@ -15,7 +15,7 @@ public class LinkedListDeque<T> implements Deque<T>{
         }
     }
 
-    public class MyIterator implements  Iterator{
+    public class MyIterator implements  Iterator<T>{
         private int wizPos;
         public  MyIterator(){
             wizPos = 0;
@@ -26,7 +26,7 @@ public class LinkedListDeque<T> implements Deque<T>{
         }
 
         @Override
-        public Object next() {
+        public T next() {
             T returnItem=get(wizPos);
             wizPos+=1;
             return returnItem;
@@ -115,13 +115,13 @@ public class LinkedListDeque<T> implements Deque<T>{
         return new MyIterator();
     }
 
-    public Node MygetRecursive (int index){
+    public Node MyGetRecursive (int index){
         if(index<0) return null;
         else if(index==0) return first.next;
-        else return MygetRecursive(index-1).next;
+        else return MyGetRecursive(index-1).next;
     }
     public T getRecursive(int index){
-       return MygetRecursive(index).item;
+       return MyGetRecursive(index).item;
     }
 
 }

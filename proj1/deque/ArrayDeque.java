@@ -78,8 +78,7 @@ public class ArrayDeque<T> implements Deque<T>{
 
     public void resize(int capacity){
         T[] Newitems = (T[]) new Object[capacity];
-        Newitems[0]=items[(first+1)%Maxsize];
-        for(int i=(first+2)%Maxsize, j=0;i!=last;i=(i+1+Maxsize)%Maxsize,j++){
+        for(int i=(first+1)%Maxsize, j=0;j!=size;i=(i+1+Maxsize)%Maxsize,j++){
             Newitems[j] =items[i];
         }
         items=Newitems;
@@ -87,7 +86,7 @@ public class ArrayDeque<T> implements Deque<T>{
         Maxsize=capacity;
         first=Maxsize-1;
     }
-    public class MyIterator implements  Iterator{
+    public class MyIterator implements  Iterator<T>{
         private int wizPos;
         public  MyIterator(){
             wizPos = 0;
@@ -98,7 +97,7 @@ public class ArrayDeque<T> implements Deque<T>{
         }
 
         @Override
-        public Object next() {
+        public T next() {
             T returnItem=get(wizPos);
             wizPos+=1;
             return returnItem;
