@@ -57,7 +57,7 @@ public class ArrayDeque<T> implements Deque<T>{
         return items[(first+index+1+Maxsize)%Maxsize];
     }
 
-    @Override
+
     public Iterator<T> iterator() {
         return new MyIterator();
     }

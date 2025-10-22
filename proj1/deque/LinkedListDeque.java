@@ -110,7 +110,7 @@ public class LinkedListDeque<T> implements Deque<T>{
         return null;
     }
 
-    @Override
+
     public Iterator<T> iterator() {
         return new MyIterator();
     }
