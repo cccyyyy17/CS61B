@@ -16,7 +16,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     @Override
     public boolean equals(Object o) {
         // 先进行类型检验
-        if (o instanceof ArrayDeque otherArrayDeque) {
+        if (o instanceof ArrayDeque ) {
+            ArrayDeque<T> otherArrayDeque = (ArrayDeque<T>) o;
             if (size != otherArrayDeque.size()) {
                 return false;
             }
