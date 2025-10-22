@@ -19,10 +19,6 @@ public class ArrayDeque<T> implements Deque<T>{
         size+=1;
     }
 
-    @Override
-    public boolean isEmpty() {
-        return size==0;
-    }
 
     @Override
     public int size() {
@@ -74,15 +70,16 @@ public class ArrayDeque<T> implements Deque<T>{
 
     }
 
-    int size;
-    T[] items;
-    int first;
-    int last;
-    int Maxsize;
+    public int size;
+    public T[] items;
+    public int first;
+    public int last;
+    public int Maxsize;
 
     public void resize(int capacity){
         T[] Newitems = (T[]) new Object[capacity];
-        for(int i=first, j=0;i!=last;i=(i+1+Maxsize)%Maxsize,j++){
+        Newitems[0]=items[(first+1)%Maxsize];
+        for(int i=(first+2)%Maxsize, j=0;i!=last;i=(i+1+Maxsize)%Maxsize,j++){
             Newitems[j] =items[i];
         }
         items=Newitems;
