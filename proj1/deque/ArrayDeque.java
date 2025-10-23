@@ -5,24 +5,24 @@ import java.util.Iterator;
 public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     @Override
     public void addFirst(T item) {
-        if (size == Maxsize) {
-            resize(Maxsize * 2);
+        if (size == maxSize) {
+            resize(maxSize * 2);
         }
         items[first] = item;
-        first = (first - 1 + Maxsize) % Maxsize;
+        first = (first - 1 + maxSize) % maxSize;
         size += 1;
     }
 
     @Override
     public boolean equals(Object o) {
         // 先进行类型检验
-        if (o instanceof ArrayDeque ) {
+        if(o instanceof Deque) {
             ArrayDeque<T> otherArrayDeque = (ArrayDeque<T>) o;
             if (size != otherArrayDeque.size()) {
                 return false;
             }
             for (int i = 0; get(i) != null; i++) {
-                if (otherArrayDeque.get(i) != this.get(i)) {
+                if ( !this.get(i).equals(otherArrayDeque.get(i) )) {
                     return false;
                 }
             }
@@ -33,11 +33,11 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public void addLast(T item) {
-        if (size == Maxsize) {
-            resize(Maxsize * 2);
+        if(size == maxSize) {
+            resize(maxSize * 2);
         }
         items[last] = item;
-        last = (last + 1 + Maxsize) % Maxsize;
+        last = (last + 1 + maxSize) % maxSize;
         size += 1;
     }
 
@@ -48,7 +48,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public void printDeque() {
-        for (int i = first; i != last; i = (i + 1) % Maxsize) {
+        for (int i = first; i != last; i = (i + 1) % maxSize) {
             System.out.print(items[i]);
             System.out.print(" ");
         }
@@ -60,13 +60,13 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         if (size == 0) {
             return null;
         }
-        first = (first + 1 + Maxsize) % Maxsize;
+        first = (first + 1 + maxSize) % maxSize;
         size -= 1;
-        T ReturnValue = items[first];
-        if (size > 50 && Maxsize / size >= 4) {
+        T returnValue = items[first];
+        if (maxSize > 50 && maxSize / size >= 4) {
             resize(size + 1);
         }
-        return ReturnValue;
+        return returnValue;
     }
 
     @Override
@@ -74,21 +74,21 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         if (size == 0) {
             return null;
         }
-        last = (last - 1 + Maxsize) % Maxsize;
+        last = (last - 1 + maxSize) % maxSize;
         size -= 1;
-        T ReturnValue = items[last];
-        if (size > 50 && Maxsize / size >= 4) {
+        T returnValue = items[last];
+        if (maxSize > 50 && maxSize / size >= 4) {
             resize(size + 1);
         }
-        return ReturnValue;
+        return returnValue;
     }
 
     @Override
     public T get(int index) {
-        if (index == Maxsize) {
+        if (index == maxSize) {
             return null;
         }
-        return items[(first + index + 1 + Maxsize) % Maxsize];
+        return items[(first + index + 1 + maxSize) % maxSize];
     }
 
     public Iterator<T> iterator() {
@@ -96,8 +96,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     }
 
     public ArrayDeque() {
-        Maxsize = 8;
-        items = (T[]) new Object[Maxsize];
+        maxSize = 8;
+        items = (T[]) new Object[maxSize];
         size = 0;
         first = 0;
         last = 1;
@@ -107,23 +107,24 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private T[] items;
     private int first;
     private int last;
-    private int Maxsize;
+    private int maxSize;
 
     private void resize(int capacity) {
-        T[] Newitems = (T[]) new Object[capacity];
-        for (int i = (first + 1) % Maxsize, j = 0; j != size; i = (i + 1 + Maxsize) % Maxsize, j++) {
-            Newitems[j] = items[i];
+        T[] newItems = (T[]) new Object[capacity];
+        for (int i = (first + 1) % maxSize, j = 0;
+             j != size; i = (i + 1 + maxSize) % maxSize, j++) {
+            newItems[j] = items[i];
         }
-        items = Newitems;
+        items = newItems;
         last = size;
-        Maxsize = capacity;
-        first = Maxsize - 1;
+        maxSize = capacity;
+        first = maxSize - 1;
     }
 
     private class MyIterator implements Iterator<T> {
         private int wizPos;
 
-        public MyIterator() {
+         MyIterator() {
             wizPos = 0;
         }
 

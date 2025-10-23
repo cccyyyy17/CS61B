@@ -8,7 +8,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         T item;
         Node prev;
         Node next;
-        public Node(Node pre, T t, Node n) {
+         Node(Node pre, T t, Node n) {
             this.prev = pre;
             item = t;
             next = n;
@@ -17,7 +17,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
     private class MyIterator implements Iterator<T> {
         private int wizPos;
-        public MyIterator() {
+         MyIterator() {
             wizPos = 0;
         }
         @Override
@@ -33,7 +33,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         }
     }
 
-    public LinkedListDeque() {
+    public LinkedListDeque(){
         size = 0;
         first = new Node(null, null, null);
         last = new Node(first, null, null);
@@ -55,13 +55,13 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     @Override
     public boolean equals(Object o) {
         // 先进行类型检验
-        if (o instanceof LinkedListDeque ) {
+        if (o instanceof Deque) {
             LinkedListDeque<T> otherLinkListDeque = (LinkedListDeque<T>) o;
             if (size != otherLinkListDeque.size()) {
                 return false;
             }
-            for (int i = 0; get(i) != null; i++) {
-                if (otherLinkListDeque.get(i) != this.get(i)) {
+            for (int i = 0; i<size; i++) {
+                if (!this.get(i).equals(otherLinkListDeque.get(i))) {
                     return false;
                 }
             }
