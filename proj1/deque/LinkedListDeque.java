@@ -56,7 +56,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     public boolean equals(Object o) {
         // 先进行类型检验
         if (o instanceof Deque) {
-            Deque<T> otherLinkListDeque = ( Deque<T>) o;
+            Deque<T> otherLinkListDeque = (Deque<T>) o;
             if (size != otherLinkListDeque.size()) {
                 return false;
             }
