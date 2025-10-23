@@ -16,13 +16,13 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     @Override
     public boolean equals(Object o) {
         // 先进行类型检验
-        if(o instanceof Deque) {
-            ArrayDeque<T> otherArrayDeque = (ArrayDeque<T>) o;
+        if (o instanceof Deque) {
+            Deque<T> otherArrayDeque = ( Deque<T>) o;
             if (size != otherArrayDeque.size()) {
                 return false;
             }
             for (int i = 0; get(i) != null; i++) {
-                if ( !this.get(i).equals(otherArrayDeque.get(i) )) {
+                if (!this.get(i).equals(otherArrayDeque.get(i))) {
                     return false;
                 }
             }
@@ -33,7 +33,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public void addLast(T item) {
-        if(size == maxSize) {
+        if (size == maxSize) {
             resize(maxSize * 2);
         }
         items[last] = item;
@@ -124,7 +124,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private class MyIterator implements Iterator<T> {
         private int wizPos;
 
-         MyIterator() {
+        MyIterator() {
             wizPos = 0;
         }
 
