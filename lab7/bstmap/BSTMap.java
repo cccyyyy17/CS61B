@@ -82,7 +82,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V>{
         System.out.println(node.value);
         if(node.right!=null) printInOrder(node.right);
     }
-    private void printInOrder(){
+    public void printInOrder(){
         printInOrder(root);
     }
     private BSTNode insert(BSTNode n,K key,V value){
