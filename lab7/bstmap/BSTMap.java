@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V>{
-    public class BSTNode{
+    private class BSTNode{
         K key;
         V value;
         BSTNode left;
@@ -16,8 +16,8 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V>{
             right=r; }
 
     }
-    BSTNode root = null;
-    int size = 0;
+    private BSTNode root = null;
+    private int size = 0;
     @Override
     public void clear() {
         root=null;
@@ -76,8 +76,11 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V>{
     public Iterator<K> iterator() {
         throw new UnsupportedOperationException("can not to iterate");
     }
-    private void printInOrder(){
-
+    private void printInOrder(BSTNode node){
+        if(node == null) return;
+        if(node.left!=null) printInOrder(node.left);
+        System.out.println(node.value);
+        if(node.right!=null) printInOrder(node.right);
     }
     private BSTNode insert(BSTNode n,K key,V value){
         if(n == null)  {return  new  BSTNode(key,value,null,null);}
