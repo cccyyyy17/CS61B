@@ -33,6 +33,12 @@ public class Main {
                 break;
             case "commit":
                 Repository.commit(args[1]);
+            case "rm":
+                Repository.rm(args[1]);
+            case "checkout":
+                Repository.checkout();
+            case "log":
+                Repository.log();
             default:
                Repository.commendExistsError();
 

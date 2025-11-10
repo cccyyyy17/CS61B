@@ -8,14 +8,12 @@ import static gitlet.Repository.BLOB_DIR;
 import static gitlet.Utils.readObject;
 import static gitlet.Utils.writeObject;
 
-public class Blob implements Serializable,Dumpable {
-    private String filepath;  // 文件内容
+public class Blob implements Serializable,Dumpable { // 文件内容
     private String hash;     // 内容的SHA-1哈希值
     private String content;
 
     public Blob( File f) {
         content = Utils.readContentsAsString(f);
-        this.filepath = f.getPath();
         this.hash = Utils.sha1(content);  // 计算哈希值
     }
 
@@ -33,8 +31,12 @@ public class Blob implements Serializable,Dumpable {
     public static Blob fromFile(File file){
         return readObject(file,Blob.class);
     }
+
+    public String getHash(){
+        return hash;
+    }
     @Override
     public void dump() {
-
+        System.out.printf("content:%s%n",content);
     }
 }

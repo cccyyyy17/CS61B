@@ -10,8 +10,7 @@ import java.util.Date; // TODO: You'll likely use this in this class
 import java.util.Map;
 import java.util.TreeMap;
 
-import static gitlet.Repository.BLOB_DIR;
-import static gitlet.Repository.COMMIT_DIR;
+import static gitlet.Repository.*;
 import static gitlet.Utils.*;
 
 /** Represents a gitlet commit object.
@@ -20,18 +19,18 @@ import static gitlet.Utils.*;
  *
  *  @author TODO
  */
-public class Commit implements Serializable{
+public class Commit implements Serializable,Dumpable{
     /** The message of this Commit. */
     private String message;
     /** Time record. */
     private Date timestamp;
     /** Parent reference.  */
-    private Commit parent;
+    private String parent;
     /** Second Parent reference.  */
-    private Commit parent2;
-    /*How to define blob reference */
-    private TreeMap<String,Blob> Data;
-    public Commit(String m,Commit p1,Commit p2,TreeMap<String,Blob> data){
+    private String parent2;
+
+    private TreeMap<String,String> Data;
+    public Commit(String m,String p1,String p2,TreeMap<String,String> data){
         message = m;
         parent = p1;
         parent2 = p2;
@@ -54,7 +53,25 @@ public class Commit implements Serializable{
     public static Commit fromFile(File file){
         return readObject(file,Commit.class);
     }
+
     public String getHash() {
-        return sha1(this.message+this.timestamp+ this.parent);
+        StringBuilder content = new StringBuilder(this.message + this.timestamp + this.parent);
+        for(String s : Data.values()){
+            content.append(s);
+        }
+        return sha1(content);
+    }
+
+    public TreeMap<String,String> getData(){
+        return Data;
+    }
+    @Override
+    public void dump() {
+        System.out.printf("content of commit");
+        System.out.printf("string: %s%n",message);
+        System.out.printf("string: %s%n",parent);
+        for (Map.Entry<String, String> entry : Data.entrySet()) {
+            System.out.println(entry.getKey() + " -> " + entry.getValue());
+        }
     }
 }
