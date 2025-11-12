@@ -1,9 +1,10 @@
 package gitlet;
 
 import com.sun.source.tree.Tree;
-import edu.princeton.cs.algs4.ST;
+import java.util.TreeMap;
 import jdk.jshell.execution.Util;
 
+import javax.xml.stream.events.StartElement;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -20,6 +21,7 @@ import static gitlet.Utils.*;
  *  @author Yang
  */
 public class Repository {
+    @SuppressWarnings("unchecked")
     /**
      * TODO: add instance variables here.
      *
@@ -59,7 +61,7 @@ public class Repository {
             /* */
             Utils.writeObject(STAGE,stage);
             Utils.writeObject(REMOVALSTAGE,removalStage);
-            Commit c = new Commit("initial commit",null,null,null);
+            Commit c = new Commit("initial commit",null,null,new TreeMap<>());
             Head = c.getHash();
             c.saveCommit();
             Utils.writeObject(HEAD,Head);
@@ -78,21 +80,25 @@ public class Repository {
 
     public static void commit(String message){
         stage = Utils.readObject(STAGE,TreeMap.class);
+        Head = Utils.readObject(HEAD, String.class);
         Commit c = new Commit(message,Head,null,stage);
+        Head = c.getHash();
         c.saveCommit();
         c.dump();
         stage.clear();
+        Utils.writeObject(HEAD,Head);
         Utils.writeObject(STAGE,stage);
     }
 
     public static void rm(String fileName){
+        /*根据文件名字来remove*/
         stage = Utils.readObject(STAGE,TreeMap.class);
         removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
         Blob b = new Blob(Utils.join(CWD,fileName));
-        if (stage.containsValue(b.getHash())) {
-            stage.remove(b.getHash());
+        if (stage.containsKey(fileName)) {
+            stage.remove(fileName);
         }
-        /*读取当前Commit对象及其TreeMap对象，如果包含rm的FIle，就加入removalStage并删除源文件(Blob文件没有存入电脑)*/
+        /*读取当前Commit对象及其TreeMap对象，如果包含rm的File，就加入removalStage并删除源文件(Blob文件没有存入电脑)*/
         Head = Utils.readObject(HEAD, String.class);
         File currentCommitFile = Utils.join(COMMIT_DIR,Head);
         Commit currentCommit = Utils.readObject(currentCommitFile,Commit.class);
@@ -100,10 +106,12 @@ public class Repository {
         for (Map.Entry<String, String> entry : Date.entrySet()) {
             if (entry.getKey().equals(b.getHash())) {
                 removalStage.put(entry.getKey(), entry.getValue());
+                File deleteFile = Utils.join(CWD,fileName);
+                Utils.restrictedDelete(deleteFile);
             }
         }
-        File deleteFile = Utils.join(CWD,fileName);
-        Utils.restrictedDelete(deleteFile);
+        Utils.writeObject(STAGE,stage);
+        Utils.writeObject(REMOVALSTAGE,removalStage);
 
     }
 
@@ -111,8 +119,21 @@ public class Repository {
 
     }
 
-    public static void log(){
+    public static void log() {
+        String CommitFileName = Utils.readObject(HEAD, String.class);
 
+        while (CommitFileName != null) {
+            File currentCommitFile = Utils.join(COMMIT_DIR, CommitFileName);
+            Commit currentCommit = Utils.readObject(currentCommitFile, Commit.class);
+
+            System.out.println("===");
+            System.out.println("commit " + currentCommit.getHash());
+            System.out.println("Date: " + currentCommit.getFormattedDate());
+            System.out.println(currentCommit.getMessage());
+            System.out.println();
+
+            CommitFileName = currentCommit.getParent();
+        }
     }
 
 

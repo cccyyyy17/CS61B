@@ -35,7 +35,7 @@ public class Commit implements Serializable,Dumpable{
         parent = p1;
         parent2 = p2;
         Data = data;
-        if(p1==null) timestamp = new Date(0);
+        if(p1 == null) timestamp = new Date(0L);
         else timestamp = new Date();
     }
     public  void saveCommit(){
@@ -56,20 +56,36 @@ public class Commit implements Serializable,Dumpable{
 
     public String getHash() {
         StringBuilder content = new StringBuilder(this.message + this.timestamp + this.parent);
-        for(String s : Data.values()){
-            content.append(s);
+        if(Data != null){
+            for(String s : Data.values()){
+                content.append(s);
+            }
         }
-        return sha1(content);
+
+        return sha1(content.toString());
     }
 
+    public String getMessage(){
+        return message;
+    }
+
+    public String getFormattedDate() {
+        return String.format("Date: %ta %tb %td %tT %tY %tz",
+                timestamp, timestamp, timestamp,
+                timestamp, timestamp, timestamp);
+    }
+    public String getParent(){
+        return parent;
+    }
     public TreeMap<String,String> getData(){
         return Data;
     }
     @Override
     public void dump() {
-        System.out.printf("content of commit");
-        System.out.printf("string: %s%n",message);
-        System.out.printf("string: %s%n",parent);
+        System.out.println("Hash:"+getHash());
+        System.out.printf("message: %s%n",message);
+        System.out.printf("parent: %s%n",parent);
+        System.out.println("content:");
         for (Map.Entry<String, String> entry : Data.entrySet()) {
             System.out.println(entry.getKey() + " -> " + entry.getValue());
         }

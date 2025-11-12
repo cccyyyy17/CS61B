@@ -1,10 +1,9 @@
 # Gitlet Design Document
 ## 任务清单
-- [ ] Head指针没有实现持续化
+- [ ] 每个仓库函数创建/读取对象时，记得调用dump方法
 -[x] 使用Utils.readContentAsString获取文件的内容
 我该如何恢复文件？？使用 writeContents 方法将内容写回到文件
 -[ ] 实现错误提示消息
-
 **Name**:Yang
 
 ## Classes and Data Structures
@@ -40,7 +39,12 @@
 
 ### Class Utils
 #### 仓库代码
-
+- 读取Head所指内容的hash值`Head = Utils.readObject(HEAD, String.class);`
++ 读取Head指针对应的文件`File currentCommitFile = Utils.join(COMMIT_DIR,Head);`
+- 读取Head所指的Commit对象`Commit currentCommit = Utils.readObject(currentCommitFile,Commit.class);`
+* 把修改了内容的指针写回去`Utils.writeObject(HEAD,Head);
+                      Utils.writeObject(STAGE,stage);`
+- 读与写一般成对出现
 # 指针如何搞
 完全没思路，回头再弄吧
 
