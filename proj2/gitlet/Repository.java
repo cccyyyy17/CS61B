@@ -43,7 +43,7 @@ public class Repository {
     public static final File CURBRANCHNAME = join(GITLET_DIR, "curbranch");
     public static TreeMap<String,String> stage ;
     public static TreeMap<String,String> removalStage ;
-    public static void gitinit() throws IOException {
+    public static void gitinit()  {
         if(GITLET_DIR.exists()) {
             error("A Gitlet version-control system " +
                     "already exists in the current directory.");
