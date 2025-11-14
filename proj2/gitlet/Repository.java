@@ -83,7 +83,6 @@ public class Repository {
         }
         Blob b = new Blob(blobFile);
         b.saveBlob();
-        b.dump();
         stage = Utils.readObject(STAGE, TreeMap.class);
         stage.put(fileName,b.getHash());
         Utils.writeObject(STAGE,stage);
@@ -101,7 +100,6 @@ public class Repository {
         Commit c = new Commit(message,Head,null,stage);
         Head = c.getHash();
         c.saveCommit();
-        c.dump();
         stage.clear();
         Utils.writeObject(HEAD,Head);
         Utils.writeObject(STAGE,stage);

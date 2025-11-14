@@ -5,10 +5,7 @@ import com.sun.source.tree.Tree;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.Date; // TODO: You'll likely use this in this class
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import static gitlet.Repository.*;
 import static gitlet.Utils.*;
@@ -70,9 +67,9 @@ public class Commit implements Serializable,Dumpable{
     }
 
     public String getFormattedDate() {
-        return String.format("Date: %ta %tb %td %tT %tY %tz",
-                timestamp, timestamp, timestamp,
-                timestamp, timestamp, timestamp);
+        return String.format(Locale.ENGLISH,
+                "%ta %tb %td %tT %tY %tz",
+                timestamp, timestamp, timestamp, timestamp, timestamp, timestamp);
     }
     public String getParent(){
         return parent;
