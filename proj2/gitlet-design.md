@@ -1,8 +1,7 @@
 # Gitlet Design Document
 ## 任务清单
-- [ ] 每个仓库函数创建/读取对象时，记得调用dump方法
--[x] 使用Utils.readContentAsString获取文件的内容
-我该如何恢复文件？？使用 writeContents 方法将内容写回到文件
+- [ ] status()有点懒得写，别忘了
+- [ ] checkpoint:init,add,commit,all checkout,log
 -[ ] 实现错误提示消息
 **Name**:Yang
 
@@ -29,6 +28,7 @@
 使用Util.writeContent(覆盖写方法)维护一个stage文件存放TreeMap
 模拟暂存区的效果
 - 同样方式维护一个removalStage变量
+- CURBRANCHNAME ：当前分支名称，初始化时候存入master，在checkout时候考虑修改内容
 - init()
 - add()
 - commit()
@@ -37,9 +37,9 @@
 - checkout()
 - log()
 
-### Class Utils
-#### 仓库代码
+### 常用代码
 - 读取Head所指内容的hash值`Head = Utils.readObject(HEAD, String.class);`
+### 取Commit类代码
 + 读取Head指针对应的文件`File currentCommitFile = Utils.join(COMMIT_DIR,Head);`
 - 读取Head所指的Commit对象`Commit currentCommit = Utils.readObject(currentCommitFile,Commit.class);`
 * 把修改了内容的指针写回去`Utils.writeObject(HEAD,Head);

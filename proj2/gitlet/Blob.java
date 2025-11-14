@@ -28,10 +28,10 @@ public class Blob implements Serializable,Dumpable { // 文件内容
         }
         writeObject(outFile, this);
     }
-    public static Blob fromFile(File file){
-        return readObject(file,Blob.class);
-    }
 
+    public String getContent(){
+        return content;
+    }
     public String getHash(){
         return hash;
     }

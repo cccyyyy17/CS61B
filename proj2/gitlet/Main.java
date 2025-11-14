@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static gitlet.Repository.CWD;
+
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author Yang
  */
@@ -38,10 +40,27 @@ public class Main {
                 Repository.rm(args[1]);
                 break;
             case "checkout":
-                Repository.checkout();
+                if(args.length == 4) {
+                    Repository.checkout(args[1],args[3]);
+                }
+                else if(args.length == 3){
+                    Repository.checkout(args[2]);
+                }
+                else if(args.length == 2){
+                    Repository.checkout(args[1]);
+                }
                 break;
             case "log":
                 Repository.log();
+                break;
+            case "global-log":
+                Repository.globalLog();
+                break;
+            case "find":
+                Repository.find(args[1]);
+                break;
+            case "status":
+                Repository.status();
                 break;
             default:
                Repository.commendExistsError();
