@@ -44,8 +44,11 @@ public class Repository {
     public static TreeMap<String,String> stage ;
     public static TreeMap<String,String> removalStage ;
     public static void gitinit() throws IOException {
-        if(!GITLET_DIR.exists()) {
-            try{
+        if(GITLET_DIR.exists()) {
+            error("A Gitlet version-control system " +
+                    "already exists in the current directory.");
+        }
+        try{
                 GITLET_DIR.mkdir();
                 COMMIT_DIR.mkdir();
                 BLOB_DIR.mkdir();
@@ -57,33 +60,43 @@ public class Repository {
                 REMOVALSTAGE.createNewFile();
                 HEAD.createNewFile();
                 CURBRANCHNAME.createNewFile();
-            } catch (IOException e){
+        } catch (IOException e){
                 throw new RuntimeException(e);
-            }
-            /* */
-            Utils.writeObject(STAGE,stage);
-            Utils.writeObject(REMOVALSTAGE,removalStage);
-            Commit c = new Commit("initial commit",null,null,new TreeMap<>());
-            String Head = c.getHash();
-            c.saveCommit();
-            Utils.writeObject(HEAD,Head);
-            writeObject(CURBRANCHNAME,"master");
-            updateCurrentBranch();
         }
+            /* */
+        Utils.writeObject(STAGE,stage);
+        Utils.writeObject(REMOVALSTAGE,removalStage);
+        Commit c = new Commit("initial commit",null,null,new TreeMap<>());
+        String Head = c.getHash();
+        c.saveCommit();
+        Utils.writeObject(HEAD,Head);
+        writeObject(CURBRANCHNAME,"master");
+        updateCurrentBranch();
+
 
     }
 
     public static void add(String fileName){
-        Blob b = new Blob(Utils.join(CWD,fileName));
+        File blobFile = Utils.join(CWD,fileName);
+        if(!blobFile.exists()) {
+            error("File does not exist.");
+        }
+        Blob b = new Blob(blobFile);
         b.saveBlob();
         b.dump();
-        stage = Utils.readObject(STAGE,TreeMap.class);
+        stage = Utils.readObject(STAGE, TreeMap.class);
         stage.put(fileName,b.getHash());
         Utils.writeObject(STAGE,stage);
     }
 
     public static void commit(String message){
         stage = Utils.readObject(STAGE,TreeMap.class);
+        if(stage.isEmpty()){
+            error("No changes added to the commit.");
+        }
+        if(message == null){
+            error("Please enter a commit message.");
+        }
         String  Head = Utils.readObject(HEAD, String.class);
         Commit c = new Commit(message,Head,null,stage);
         Head = c.getHash();
@@ -97,11 +110,13 @@ public class Repository {
 
     public static void rm(String fileName){
         /*根据文件名字来remove*/
+        int signal = 1;
         stage = Utils.readObject(STAGE,TreeMap.class);
         removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
         Blob b = new Blob(Utils.join(CWD,fileName));
         if (stage.containsKey(fileName)) {
             stage.remove(fileName);
+            signal = 0;
         }
         /*读取当前Commit对象及其TreeMap对象，如果包含rm的File，就加入removalStage并删除源文件(Blob文件没有存入电脑)*/
         String Head = Utils.readObject(HEAD, String.class);
@@ -113,15 +128,21 @@ public class Repository {
                 removalStage.put(entry.getKey(), entry.getValue());
                 File deleteFile = Utils.join(CWD,fileName);
                 Utils.restrictedDelete(deleteFile);
+                signal = 0;
             }
         }
         Utils.writeObject(STAGE,stage);
         Utils.writeObject(REMOVALSTAGE,removalStage);
-
+        if(signal == 1){
+            message("No reason to remove the file.");
+        }
     }
 
     private static Commit commitHashToCommit(String hash){
         File currentCommitFile = Utils.join(COMMIT_DIR,hash);
+        if(!currentCommitFile.exists()){
+            error("No commit with that id exists.");
+        }
         return Utils.readObject(currentCommitFile,Commit.class);
     }
     private static String blobHashToContent(String blobHash){
@@ -160,6 +181,10 @@ public class Repository {
     }
 
     public static void checkout(String s,String fileName)  {
+      if(s != "--"){
+          error("Incorrect operands.");
+      }
+      int signal = 1;
       Commit head = commitHashToCommit(readObject(HEAD,String.class));
       TreeMap<String ,String> data = head.getData();
       if(data == null) {return ;}
@@ -168,12 +193,20 @@ public class Repository {
               File file = join(CWD,fileName);
               if(!file.exists()) {  try{file.createNewFile();}catch (IOException e){throw new RuntimeException(e);}}
               writeContents(file,blobHashToContent(entry.getValue()));
+              signal = 0;
           }
       }
-
+      if(signal == 1) {
+          error("File does not exist in that commit.");
+      }
     }
 
     public static void checkout(String commitId,String s,String fileName){
+        if(s != "--"){
+            error("Incorrect operands.");
+        }
+        int signal = 1;
+        /*错误消息实现在commitHashToCommit中*/
         Commit commit = commitHashToCommit(commitId);
         TreeMap<String ,String> data = commit.getData();
         if(data == null) {return ;}
@@ -182,8 +215,12 @@ public class Repository {
                 File file = join(CWD,fileName);
                 if(!file.exists()) {  try{file.createNewFile();}catch (IOException e){throw new RuntimeException(e);}}
                 writeContents(file,blobHashToContent(entry.getValue()));
+                signal = 0;
             }
             }
+        if(signal == 1) {
+            error("File does not exist in that commit.");
+        }
         }
 
     public static void checkout(String branchName){
@@ -193,17 +230,32 @@ public class Repository {
             return ;
         }
         /*删除当前Commit所有data，恢复所有branch Commit的data*/
+        File branchFile = join(REFS_DIR,branchName);
+        if(!branchFile.exists()){
+            error("No such branch exists.");
+        }
+        String branchHash = readObject(branchFile,String.class);
+        Commit branch = readObject(join(COMMIT_DIR,branchHash),Commit.class);
+        TreeMap<String,String> branchData = branch.getData();
+
+        String headHash = readObject(HEAD,String.class);
+        Commit head = readObject(join(COMMIT_DIR,branchHash),Commit.class);
+        TreeMap<String,String> headData = head.getData();
+        /*会被覆盖的文件报的错误*/
+        for(String branchFileName :branchData.keySet()){
+            File f = join(CWD,branchFileName);
+            if(f.exists() && !headData.containsKey(branchFileName)){
+                error("There is an untracked file in the way; " +
+                        "delete it, or add and commit it first.");
+            }
+        }
+        deleteCommitData(headHash);
+        putCommitData(branchHash);
+        writeObject(HEAD,branchHash);
         stage = readObject(STAGE,TreeMap.class);
         stage.clear();
         writeObject(STAGE,stage);
-        String headHash = readObject(HEAD,String.class);
-        deleteCommitData(headHash);
-        String branchHash = readObject(join(REFS_DIR,branchName),String.class);
-        putCommitData(branchHash);
-        writeObject(HEAD,branchHash);
     }
-
-
 
 
     public static void log() {
@@ -239,6 +291,7 @@ public class Repository {
     }
 
     public static  void find(String message){
+        int signal = 1;
         List<String> list = Utils.plainFilenamesIn(COMMIT_DIR);
         if(list != null){
             for(String s: list){
@@ -246,15 +299,43 @@ public class Repository {
                 Commit currentCommit = Utils.readObject(currentCommitFile, Commit.class);
                 if(currentCommit.getMessage().equals(message)) {
                     System.out.println(currentCommit.getHash());
+                    signal = 0;
                 }
             }
+        }
+        if(signal == 1){
+            message("Found no commit with that message.");
         }
     }
 
     public static void status(){
         System.out.println("=== Branches ===");
+        List<String> dir = plainFilenamesIn(REFS_DIR);
+        String currentBranch = readObject(CURBRANCHNAME,String.class);
+        System.out.println("*"+currentBranch);
+        if(dir != null) {
+            for (String s : dir) {
+                if (!s.equals(currentBranch)) {
+                    System.out.println(s);
+                }
+            }
+        }
+        System.out.println();
+
         System.out.println("=== Staged Files ===");
+        stage = stage = Utils.readObject(STAGE,TreeMap.class);
+        for(String key :stage.keySet()){
+            System.out.println(key);
+        }
+        System.out.println();
+
         System.out.println("=== Removed Files ===");
+        removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
+        for(String key :removalStage.keySet()){
+            System.out.println(key);
+        }
+        System.out.println();
+
         System.out.println("=== Modifications Not Staged For Commit ===");
         System.out.println("=== Untracked Files ===");
     }
@@ -276,18 +357,19 @@ public class Repository {
         Utils.writeObject(branch,Head);
     }
 
-    public static void operandsNumberError(){
-        System.out.println("Not in an initialized Gitlet directory.");
-        System.exit(0);
+    public static void rmBranch(String branchName){
+        File branchFile = join( REFS_DIR,branchName);
+        if(!branchFile.exists()){
+            error("A branch with that name does not exist.");
+        }
+        String currentBranchName = readObject(CURBRANCHNAME,String.class);
+        if(currentBranchName.equals(branchName)){
+            error("Cannot remove the current branch.");
+        }
+        restrictedDelete(branchFile);
     }
 
-    public static void initializeError(){
-        System.out.println("Not in an initialized Gitlet directory.");
-        System.exit(0);
+    public static void reset(String commitId){
     }
 
-    public static void commendExistsError(){
-        System.out.println("No command with that name exists.");
-        System.exit(0);
-    }
 }

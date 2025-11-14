@@ -1,6 +1,5 @@
 # Gitlet Design Document
 ## 任务清单
-- [ ] status()有点懒得写，别忘了
 - [ ] checkpoint:init,add,commit,all checkout,log
 -[ ] 实现错误提示消息
 **Name**:Yang
@@ -39,11 +38,14 @@
 
 ### 常用代码
 - 读取Head所指内容的hash值`Head = Utils.readObject(HEAD, String.class);`
+* 读当前分支名称`String currentBranch = readObject(CURBRANCHNAME,String.class)`
+- 暂存区`stage = Utils.readObject(STAGE,TreeMap.class);`
++ 暂存移除区`removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);`
 ### 取Commit类代码
 + 读取Head指针对应的文件`File currentCommitFile = Utils.join(COMMIT_DIR,Head);`
 - 读取Head所指的Commit对象`Commit currentCommit = Utils.readObject(currentCommitFile,Commit.class);`
 * 把修改了内容的指针写回去`Utils.writeObject(HEAD,Head);
-                      Utils.writeObject(STAGE,stage);`
+                      Utils.writeObject(STAGE,stage);
 - 读与写一般成对出现
 # 指针如何搞
 完全没思路，回头再弄吧
