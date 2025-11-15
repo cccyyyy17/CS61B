@@ -76,7 +76,7 @@ public class Commit implements Serializable, Dumpable {
     public String getParent() {
         return parent;
     }
-    public String getSecondParent(){
+    public String getSecondParent() {
         return parent2;
     }
     public TreeMap<String, String> getData() {
