@@ -273,104 +273,123 @@ public class Repository {
         /*更新CURBRANCHNAME存放的内容(每次更新改变Head指针的指向分支都要更新)*/
     }
 
-    private static String seekSplitPoint(String headHash,
-                                         String branchHash, String branchName) {
+    private static String seekSplitPoint(String headHash, String branchHash, String branchName) {
         if (headHash == null || branchHash == null) {
             return null;
         }
 
         Set<String> visitedHead = new HashSet<>();
         Set<String> visitedBranch = new HashSet<>();
-
         List<String> headList = new ArrayList<>();
         List<String> branchList = new ArrayList<>();
 
+        initializeLists(headHash, branchHash, headList, branchList);
+
+        return findCommonAncestor(headList, branchList, visitedHead, visitedBranch, headHash, branchHash, branchName);
+    }
+
+    private static void initializeLists(String headHash, String branchHash,
+                                        List<String> headList, List<String> branchList) {
         headList.add(headHash);
         branchList.add(branchHash);
+    }
 
+    private static String findCommonAncestor(List<String> headList, List<String> branchList,
+                                             Set<String> visitedHead, Set<String> visitedBranch,
+                                             String headHash, String branchHash, String branchName) {
         int headIndex = 0;
         int branchIndex = 0;
 
         while (headIndex < headList.size() || branchIndex < branchList.size()) {
-            // 处理head侧的提交
-            if (headIndex < headList.size()) {
-                String currentHead = headList.get(headIndex);
-                headIndex++;
-
-                if (currentHead == null) {
-                    continue;
-                }
-                if (visitedHead.contains(currentHead)) {
-                    continue;
-                }
-
-                visitedHead.add(currentHead);
-
-                if (visitedBranch.contains(currentHead)) {
-                    if (currentHead.equals(branchHash)) {
-                        message("Given branch is an ancestor of the current branch.");
-                        exit(0);
-                    }
-                    return currentHead;
-                }
-
-
-                File commitFile = join(COMMIT_DIR, currentHead);
-                if (commitFile.exists()) {
-                    Commit headCommit = readObject(commitFile, Commit.class);
-                    if (headCommit != null) {
-                        if (headCommit.getParent() != null) {
-                            headList.add(headCommit.getParent());
-                        }
-                        if (headCommit.getSecondParent() != null) {
-                            headList.add(headCommit.getSecondParent());
-                        }
-                    }
-                }
-
+            String commonAncestor = processHeadSide(headList, visitedHead, visitedBranch,
+                    headHash, branchHash, branchName, headIndex);
+            if (commonAncestor != null) {
+                return commonAncestor;
             }
+            headIndex++;
 
-            // 处理branch侧的提交
-            if (branchIndex < branchList.size()) {
-                String currentBranch = branchList.get(branchIndex);
-                branchIndex++;
-
-                if (currentBranch == null) {
-                    continue;
-                }
-                if (visitedBranch.contains(currentBranch)) {
-                    continue;
-                }
-
-                visitedBranch.add(currentBranch);
-
-                if (visitedHead.contains(currentBranch)) {
-                    if (currentBranch.equals(headHash)) {
-                        message("Current branch fast-forwarded.");
-                        checkout(branchName);
-                        exit(0);
-                    }
-                    return currentBranch;
-                }
-
-                // 安全地获取父节点
-
-                File commitFile = join(COMMIT_DIR, currentBranch);
-                if (commitFile.exists()) {
-                    Commit branchCommit = readObject(commitFile, Commit.class);
-                    if (branchCommit != null) {
-                        if (branchCommit.getParent() != null) {
-                            branchList.add(branchCommit.getParent());
-                        }
-                        if (branchCommit.getSecondParent() != null) {
-                            branchList.add(branchCommit.getSecondParent());
-                        }
-                    }
-                }
-
+            commonAncestor = processBranchSide(branchList, visitedHead, visitedBranch,
+                    headHash, branchHash, branchName, branchIndex);
+            if (commonAncestor != null) {
+                return commonAncestor;
             }
+            branchIndex++;
         }
         return null;
+    }
+
+    private static String processHeadSide(List<String> headList, Set<String> visitedHead,
+                                          Set<String> visitedBranch, String headHash,
+                                          String branchHash, String branchName, int index) {
+        if (index >= headList.size()) {
+            return null;
+        }
+
+        String currentHead = headList.get(index);
+        if (currentHead == null || visitedHead.contains(currentHead)) {
+            return null;
+        }
+
+        visitedHead.add(currentHead);
+
+        if (visitedBranch.contains(currentHead)) {
+            return handleFoundCommonAncestor(currentHead, headHash, branchHash, branchName, true);
+        }
+
+        addParentCommits(currentHead, headList);
+        return null;
+    }
+
+    private static String processBranchSide(List<String> branchList, Set<String> visitedHead,
+                                            Set<String> visitedBranch, String headHash,
+                                            String branchHash, String branchName, int index) {
+        if (index >= branchList.size()) {
+            return null;
+        }
+
+        String currentBranch = branchList.get(index);
+        if (currentBranch == null || visitedBranch.contains(currentBranch)) {
+            return null;
+        }
+
+        visitedBranch.add(currentBranch);
+
+        if (visitedHead.contains(currentBranch)) {
+            return handleFoundCommonAncestor(currentBranch, headHash, branchHash, branchName, false);
+        }
+
+        addParentCommits(currentBranch, branchList);
+        return null;
+    }
+
+    private static String handleFoundCommonAncestor(String commonHash, String headHash,
+                                                    String branchHash, String branchName,
+                                                    boolean isFromHead) {
+        if (commonHash.equals(branchHash)) {
+            message("Given branch is an ancestor of the current branch.");
+            exit(0);
+        }
+        if (commonHash.equals(headHash)) {
+            message("Current branch fast-forwarded.");
+            checkout(branchName);
+            exit(0);
+        }
+        return commonHash;
+    }
+
+    private static void addParentCommits(String commitHash, List<String> commitList) {
+        File commitFile = join(COMMIT_DIR, commitHash);
+        if (commitFile.exists()) {
+            Commit commit = readObject(commitFile, Commit.class);
+            if (commit != null) {
+                if (commit.getParent() != null) {
+                    commitList.add(commit.getParent());
+                }
+                if (commit.getSecondParent() != null) {
+                    commitList.add(commit.getSecondParent());
+                }
+            }
+        }
     }
 
     private static void dealConflict(String headDataHash, String branchDataHash, String fileName) {
@@ -624,29 +643,42 @@ public class Repository {
     }
 
     public static void merge(String branchName) {
+        checkPreconditions(branchName);
+
+        String headHash = readObject(HEAD, String.class);
+        File branchFile = join(REFS_DIR, branchName);
+        String branchHash = readObject(branchFile, String.class);
+        String splitPoint = seekSplitPoint(headHash, branchHash, branchName);
+
+        untrackedFileErrorWithoutDelete(headHash, branchHash);
+        performFileMerging(branchName, headHash, branchHash, splitPoint);
+        createMergeCommit(branchName, branchHash);
+    }
+
+    private static void checkPreconditions(String branchName) {
         stage = Utils.readObject(STAGE, TreeMap.class);
         removalStage = Utils.readObject(REMOVALSTAGE, TreeMap.class);
         if (!stage.isEmpty() || !removalStage.isEmpty()) {
             message("You have uncommitted changes.");
             exit(0);
         }
-        /*寻找分裂点splitpoint*/
-        String headHash = readObject(HEAD, String.class);
+
         File branchFile = join(REFS_DIR, branchName);
         if (!branchFile.exists()) {
             message("A branch with that name does not exist.");
             exit(0);
         }
+
+        String headHash = readObject(HEAD, String.class);
         String branchHash = readObject(branchFile, String.class);
         if (branchHash.equals(headHash)) {
             message("Cannot merge a branch with itself.");
             exit(0);
         }
-        String splitPoint = seekSplitPoint(headHash, branchHash, branchName);
-        //错误消息会被覆盖的消息
-        untrackedFileErrorWithoutDelete(headHash, branchHash);
+    }
 
-        /*以文件名Name来判断是否为同一文件，以文件内容Content来判断是否修改*/
+    private static void performFileMerging(String branchName, String headHash,
+                                           String branchHash, String splitPoint) {
         Commit sp = readObject(join(COMMIT_DIR, splitPoint), Commit.class);
         Commit head = readObject(join(COMMIT_DIR, headHash), Commit.class);
         Commit branch = readObject(join(COMMIT_DIR, branchHash), Commit.class);
@@ -655,85 +687,105 @@ public class Repository {
         TreeMap<String, String> headData = head.getData();
         TreeMap<String, String> branchData = branch.getData();
 
+        mergeBranchFiles(headHash, branchHash, spData, headData, branchData);
+        mergeHeadOnlyFiles(headHash, branchHash, spData, headData, branchData);
+    }
+
+    private static void mergeBranchFiles(String headHash, String branchHash,
+                                         TreeMap<String, String> spData,
+                                         TreeMap<String, String> headData,
+                                         TreeMap<String, String> branchData) {
         for (Map.Entry<String, String> entry : branchData.entrySet()) {
-            //head的key对应的blobFile的hash值(values)
             String headFileHash = headData.get(entry.getKey());
             String branchFileHash = entry.getValue();
             String blobFileName = entry.getKey();
-            /*如果head和branch都包含这个文件*/
+
             if (headData.containsKey(blobFileName)) {
-                //content同
-                if (headFileHash.equals(branchFileHash)) {
-                    stage.put(blobFileName, branchFileHash);
-                    continue;
-                } else { //sp没
-                    if (!spData.containsKey(blobFileName)) {
-                        dealConflict(headFileHash, branchFileHash, blobFileName);
-                    } else { /*else:sp中也有这个Name。*/
-                        String spFileHash = spData.get(blobFileName);
-                        if (headFileHash.equals(spFileHash)) {
-                            //head相同，branch不同，保留branch的版本
-                            checkout(branchHash, "--", blobFileName);
-                            stage.put(blobFileName, branchFileHash);
-                        } else if (branchFileHash.equals(spFileHash)) {
-                            //branch相同，head不同，保留branch的版本
-                            checkout(headHash, "--", blobFileName);
-                            stage.put(blobFileName, headFileHash);
-                        } else { // sp有，都不相同 --> 冲突
-                            dealConflict(headFileHash, branchFileHash, blobFileName);
-                        }
-                    }
-                }
-            } else {  /*如果branch包含(正在遍历肯定有)，head不包含这个文件*/
-                // sp没有 -->保留有的，此时是branch
-                if (!spData.containsKey(blobFileName)) {
-                    checkout(branchHash, "--", blobFileName);
-                    stage.put(blobFileName, branchFileHash);
-                } else { // sp有,且Content相同
-                    if (spData.get(blobFileName).equals(branchFileHash)) {
-                        File deleteFile = join(CWD, blobFileName);
-                        if (deleteFile.exists()) {
-                            restrictedDelete(deleteFile);
-                        }
-                    } else { // sp有,但Content不同(此出Head是没有该文件的)
-                        dealConflict(headFileHash, branchFileHash, blobFileName);
-                    }
-                }
+                handleBothBranchesHaveFile(blobFileName, headFileHash, branchFileHash,
+                        headHash, branchHash, spData);
+            } else {
+                handleOnlyBranchHasFile(blobFileName, branchFileHash, headHash, branchHash, spData);
             }
         }
-        //一个有一个无，补上head有但branch没有的
-        for (Map.Entry<String, String> entry : headData.entrySet()) {
-            //branch的key对应的blobFile的hash值(values)
-            String headFileHash = entry.getValue();
-            String branchFileHash = branchData.get(entry.getKey());
-            String blobFileName = entry.getKey(); //此时是head的blob文件
-            if (!branchData.containsKey(blobFileName)) {
-                //branch不包含的逻辑体内(逻辑复用上面的部分)
-                // sp没有 -->保留有的，此时是head
-                if (!spData.containsKey(blobFileName)) {
-                    checkout(headHash, "--", blobFileName);
-                    stage.put(blobFileName, headFileHash);
-                } else {       // sp有,且Content相同
-                    if (spData.get(blobFileName).equals(headFileHash)) {
-                        File deleteFile = join(CWD, blobFileName);
-                        if (deleteFile.exists()) {
-                            restrictedDelete(deleteFile);
-                        }
-                    } else { // sp有,但Content不同(此出Branch是没有该文件的)
-                        dealConflict(headFileHash, branchFileHash, blobFileName);
-                    }
-                }
-            }
+    }
+
+    private static void handleBothBranchesHaveFile(String fileName, String headHashValue,
+                                                   String branchHashValue, String headHash,
+                                                   String branchHash, TreeMap<String, String> spData) {
+        if (headHashValue.equals(branchHashValue)) {
+            stage.put(fileName, branchHashValue);
+            return;
         }
 
-        String commitMessage = "Merged " + branchName
-                + " into " + readObject(CURBRANCHNAME, String.class) + ".";
-        //commit的创建
+        if (!spData.containsKey(fileName)) {
+            dealConflict(headHashValue, branchHashValue, fileName);
+        } else {
+            String spFileHash = spData.get(fileName);
+            if (headHashValue.equals(spFileHash)) {
+                checkout(branchHash, "--", fileName);
+                stage.put(fileName, branchHashValue);
+            } else if (branchHashValue.equals(spFileHash)) {
+                checkout(headHash, "--", fileName);
+                stage.put(fileName, headHashValue);
+            } else {
+                dealConflict(headHashValue, branchHashValue, fileName);
+            }
+        }
+    }
+
+    private static void handleOnlyBranchHasFile(String fileName, String branchHashValue,
+                                                String headHash, String branchHash,
+                                                TreeMap<String, String> spData) {
+        if (!spData.containsKey(fileName)) {
+            checkout(branchHash, "--", fileName);
+            stage.put(fileName, branchHashValue);
+        } else if (spData.get(fileName).equals(branchHashValue)) {
+            File deleteFile = join(CWD, fileName);
+            if (deleteFile.exists()) {
+                restrictedDelete(deleteFile);
+            }
+        } else {
+            dealConflict(null, branchHashValue, fileName);
+        }
+    }
+
+    private static void mergeHeadOnlyFiles(String headHash, String branchHash,
+                                           TreeMap<String, String> spData,
+                                           TreeMap<String, String> headData,
+                                           TreeMap<String, String> branchData) {
+        for (Map.Entry<String, String> entry : headData.entrySet()) {
+            String blobFileName = entry.getKey();
+            if (!branchData.containsKey(blobFileName)) {
+                handleOnlyHeadHasFile(blobFileName, entry.getValue(), headHash, branchHash, spData);
+            }
+        }
+    }
+
+    private static void handleOnlyHeadHasFile(String fileName, String headHashValue,
+                                              String headHash, String branchHash,
+                                              TreeMap<String, String> spData) {
+        if (!spData.containsKey(fileName)) {
+            checkout(headHash, "--", fileName);
+            stage.put(fileName, headHashValue);
+        } else if (spData.get(fileName).equals(headHashValue)) {
+            File deleteFile = join(CWD, fileName);
+            if (deleteFile.exists()) {
+                restrictedDelete(deleteFile);
+            }
+        } else {
+            dealConflict(headHashValue, null, fileName);
+        }
+    }
+
+    private static void createMergeCommit(String branchName, String branchHash) {
+        String commitMessage = "Merged " + branchName + " into " + readObject(CURBRANCHNAME, String.class) + ".";
+
         removalStage = Utils.readObject(REMOVALSTAGE, TreeMap.class);
         if (stage.isEmpty()) {
             message("No changes added to the commit.");
             exit(0);
         }
+
         String headPoint = Utils.readObject(HEAD, String.class);
         Commit c = new Commit(commitMessage, headPoint, branchHash, stage);
         removalStageToCommit(c);
