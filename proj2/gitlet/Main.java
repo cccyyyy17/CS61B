@@ -138,6 +138,15 @@ public class Main {
                 }
                 Repository.reset(args[1]);
                 break;
+            case "merge":
+                if (args.length > 2) {
+                    throw error("Incorrect operands.");
+                }
+                if(!GITLET_DIR.exists()){
+                    throw error("Not in an initialized Gitlet directory.");
+                }
+                Repository.merge(args[1]);
+                break;
             default:
               throw error("No command with that name exists.");
 

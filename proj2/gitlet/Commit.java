@@ -84,7 +84,9 @@ public class Commit implements Serializable,Dumpable{
         System.out.printf("parent: %s%n",parent);
         System.out.println("content:");
         for (Map.Entry<String, String> entry : Data.entrySet()) {
-            System.out.println(entry.getKey() + " -> " + entry.getValue());
+            File blobFile = join(BLOB_DIR,entry.getValue());
+            Blob blob = readObject(blobFile, Blob.class);
+            System.out.println(entry.getKey() + " -> " + entry.getValue() + " -> " + blob.getContent());
         }
     }
 }

@@ -1,7 +1,8 @@
 # Gitlet Design Document
 ## 任务清单
-- [ ] checkpoint:init,add,commit,all checkout,log
--[ ] 实现错误提示消息
+- [x] 冲突函数里的println
+- [] merge调用了dump方法
+
 **Name**:Yang
 
 ## Classes and Data Structures
@@ -47,13 +48,28 @@
 * 把修改了内容的指针写回去`Utils.writeObject(HEAD,Head);
                       Utils.writeObject(STAGE,stage);
 - 读与写一般成对出现
-# 指针如何搞
-完全没思路，回头再弄吧
 
- ***
+# merge操作
+1. different content ：内容寻址，所谓的修改过文件的定义
+2. 任何自split point增加的文件都保存
+3. 任何自split point的文件，一个分支没改变(内容orHash值没改变)，另一个分支删除了，保持删除
+以文件名Name来判断是否为同一文件，以文件内容Content来判断是否修改
+- Name 都有 
+  1. content同 -- > 保留该文件 ,暂存
+  2. content不同 
+      - sp没有 -- 冲突
+      - sp有，其中一个和sp相同，保留不同的(head相同留branch，branch相同留head)
+      - sp有，都不相同 --> 冲突 
+- Name 一个有一个无(branch有)，我还得写head有branch没有的(记)
+  1. sp没有 -->保留有的，此时是branch
+  2. sp也有 
+      - 和sp内容相同，移除 
+      - 和sp也不同 -->冲突
+- Name 都没有 -->保持现状(遍历时不会经过)(不用遍历)
 
-
-
+removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
+removalStage.clear();
+Utils.writeObject(REMOVALSTAGE,removalStage);
 
 
 ## Algorithms
