@@ -1,6 +1,5 @@
 package gitlet;
 
-import com.sun.source.tree.Tree;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +15,7 @@ import static gitlet.Utils.*;
  *
  *  @author TODO
  */
-public class Commit implements Serializable,Dumpable{
+public class Commit implements Serializable,Dumpable {
     /** The message of this Commit. */
     private String message;
     /** Time record. */
@@ -35,7 +34,7 @@ public class Commit implements Serializable,Dumpable{
         if(p1 == null) timestamp = new Date(0L);
         else timestamp = new Date();
     }
-    public  void saveCommit(){
+    public  void saveCommit() {
         File outFile = Utils.join(COMMIT_DIR, getHash());
         if (!outFile.exists()) {
             try {
@@ -47,7 +46,7 @@ public class Commit implements Serializable,Dumpable{
         writeObject(outFile, this);
     }
 
-    public static Commit fromFile(File file){
+    public static Commit fromFile(File file) {
         return readObject(file,Commit.class);
     }
 
@@ -62,7 +61,7 @@ public class Commit implements Serializable,Dumpable{
         return sha1(content.toString());
     }
 
-    public String getMessage(){
+    public String getMessage() {
         return message;
     }
 
@@ -74,12 +73,12 @@ public class Commit implements Serializable,Dumpable{
     public String getParent(){
         return parent;
     }
-    public TreeMap<String,String> getData(){
+    public TreeMap<String,String> getData() {
         return Data;
     }
     @Override
     public void dump() {
-        System.out.println("Hash:"+getHash());
+        System.out.println("Hash:"+ getHash());
         System.out.printf("message: %s%n",message);
         System.out.printf("parent: %s%n",parent);
         System.out.println("content:");

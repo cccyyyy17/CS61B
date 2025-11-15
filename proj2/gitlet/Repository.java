@@ -1,6 +1,5 @@
 package gitlet;
 
-import com.sun.source.tree.Tree;
 
 import java.util.*;
 
@@ -11,10 +10,8 @@ import java.util.TreeMap;
 import static gitlet.Utils.*;
 import static java.lang.System.exit;
 
-// TODO: any imports you need here
 
 /** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
  *  @author Yang
@@ -22,7 +19,6 @@ import static java.lang.System.exit;
 public class Repository {
     @SuppressWarnings("unchecked")
     /**
-     * TODO: add instance variables here.
      *
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
@@ -42,11 +38,12 @@ public class Repository {
     public static final File HEAD = join(GITLET_DIR, "head");
     /*当前Head指向的分支名称，例如master*/
     public static final File CURBRANCHNAME = join(GITLET_DIR, "curbranch");
-    public static TreeMap<String,String> stage = new TreeMap<>();;
-    public static TreeMap<String,String> removalStage =  new TreeMap<>();
+    private static TreeMap<String,String> stage = new TreeMap<>();;
+    private static TreeMap<String,String> removalStage =  new TreeMap<>();
     public static void gitinit()  {
         if(GITLET_DIR.exists()) {
-            throw error("A Gitlet version-control system already exists in the current directory.");
+            message("A Gitlet version-control system already exists in the current directory.");
+            exit(0);
         }
         try{
                 GITLET_DIR.mkdir();
@@ -76,19 +73,23 @@ public class Repository {
 
     }
 
-    public static void add(String fileName){
+    public static void add(String fileName) {
         File blobFile = Utils.join(CWD,fileName);
         if(!blobFile.exists()) {
             message("File does not exist.");
             exit(0);
         }
+        removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
+        if(removalStage.containsKey(fileName)) {
+            removalStage.remove(fileName);
+        }
         Blob b = new Blob(blobFile);
         b.saveBlob();
-        String Head = Utils.readObject(HEAD, String.class);
-        Commit curCommit = readObject(join(COMMIT_DIR,Head),Commit.class);
+        String head = Utils.readObject(HEAD, String.class);
+        Commit curCommit = readObject(join(COMMIT_DIR,head),Commit.class);
         TreeMap<String,String> data = curCommit.getData();
-        for(Map.Entry<String,String> entry:data.entrySet()){
-            if(entry.getKey().equals(fileName) && entry.getValue().equals(b.getHash())){
+        for(Map.Entry<String,String> entry:data.entrySet()) {
+            if(entry.getKey().equals(fileName) && entry.getValue().equals(b.getHash())) {
                 return ;
             }
         }
@@ -96,17 +97,17 @@ public class Repository {
         stage.put(fileName,b.getHash());
         Utils.writeObject(STAGE,stage);
     }
-    private static void addStageToCommit(Commit c){
+    private static void addStageToCommit(Commit c) {
         stage = Utils.readObject(STAGE,TreeMap.class);
         TreeMap<String,String> data = c.getData();
-        for(Map.Entry<String,String> entry:stage.entrySet()){
+        for(Map.Entry<String,String> entry:stage.entrySet()) {
             data.put(entry.getKey(),entry.getValue());
         }
     }
-    private static void removalStageToCommit(Commit c){
+    private static void removalStageToCommit(Commit c) {
         removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
         TreeMap<String,String> data = c.getData();
-        for(Map.Entry<String,String> entry:removalStage.entrySet()){
+        for(Map.Entry<String,String> entry:removalStage.entrySet()) {
             if(data.containsKey(entry.getKey())){
                 data.remove(entry.getKey());
             }
@@ -115,30 +116,30 @@ public class Repository {
     public static void commit(String message){
         stage = Utils.readObject(STAGE,TreeMap.class);
         removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
-        if(stage.isEmpty()){
+        if(stage.isEmpty() && removalStage.isEmpty()) {
             message("No changes added to the commit.");
             exit(0);
         }
-        if(message == null){
+        if(message == null || message.isEmpty()) {
             message("Please enter a commit message.");
             exit(0);
         }
-        String  Head = Utils.readObject(HEAD, String.class);
-        Commit  headCommit = readObject(join(COMMIT_DIR,Head),Commit.class);
-        Commit c = new Commit(message,Head,null,headCommit.getData());
+        String  head = Utils.readObject(HEAD, String.class);
+        Commit  headCommit = readObject(join(COMMIT_DIR,head),Commit.class);
+        Commit c = new Commit(message,head,null,headCommit.getData());
         addStageToCommit(c);
         removalStageToCommit(c);
-        Head = c.getHash();
+        head = c.getHash();
         c.saveCommit();
         stage.clear();
         removalStage.clear();
-        Utils.writeObject(HEAD,Head);
+        Utils.writeObject(HEAD,head);
         Utils.writeObject(STAGE,stage);
         Utils.writeObject(REMOVALSTAGE,removalStage);
         updateCurrentBranch();
     }
 
-    public static void rm(String fileName){
+    public static void rm(String fileName) {
         /*根据文件名字来remove*/
         int signal = 1;
         stage = Utils.readObject(STAGE,TreeMap.class);
@@ -148,8 +149,8 @@ public class Repository {
             signal = 0;
         }
         /*读取当前Commit对象及其TreeMap对象，如果包含rm的File，就加入removalStage并删除源文件(Blob文件没有存入电脑)*/
-        String Head = Utils.readObject(HEAD, String.class);
-        File currentCommitFile = Utils.join(COMMIT_DIR,Head);
+        String head = Utils.readObject(HEAD, String.class);
+        File currentCommitFile = Utils.join(COMMIT_DIR,head);
         Commit currentCommit = Utils.readObject(currentCommitFile,Commit.class);
         TreeMap<String,String> Date = currentCommit.getData();
         for (Map.Entry<String, String> entry : Date.entrySet()) {
@@ -167,48 +168,50 @@ public class Repository {
         }
     }
 
-    private static Commit commitHashToCommit(String hash){
+    private static Commit commitHashToCommit(String hash) {
         File currentCommitFile = Utils.join(COMMIT_DIR,hash);
-        if(!currentCommitFile.exists()){
+        if(!currentCommitFile.exists()) {
             throw error("No commit with that id exists.");
         }
         return Utils.readObject(currentCommitFile,Commit.class);
     }
-    private static String blobHashToContent(String blobHash){
+    private static String blobHashToContent(String blobHash) {
         File blobFile = join(BLOB_DIR,blobHash);
         Blob b = readObject(blobFile,Blob.class);
         return b.getContent();
     }
-    private static void updateCurrentBranch(){
+    private static void updateCurrentBranch() {
         String currentBranchName = readObject(CURBRANCHNAME,String.class);
         File currentBranch = join(REFS_DIR,currentBranchName);
         String writeContent = readObject(HEAD,String.class);
         writeObject(currentBranch,writeContent);
     }
-    private static void deleteCommitData(String commitHash){
+    private static void deleteCommitData(String commitHash) {
         Commit c = readObject(join(COMMIT_DIR,commitHash),Commit.class);
         TreeMap<String,String> data = c.getData();
-        if(data == null) {return ;}
-        for(Map.Entry<String,String> entry : data.entrySet()){
+        if(data == null) {
+             return ;
+        }
+        for(Map.Entry<String,String> entry : data.entrySet()) {
             File trackedFile = join(CWD,entry.getKey());
             restrictedDelete(trackedFile);
         }
     }
-    private static void putCommitData(String commitHash){
+    private static void putCommitData(String commitHash) {
         Commit c = readObject(join(COMMIT_DIR,commitHash),Commit.class);
         TreeMap<String,String> data = c.getData();
         if(data == null) {return ;}
-        for(Map.Entry<String,String> entry : data.entrySet()){
+        for(Map.Entry<String,String> entry : data.entrySet()) {
             File trackedFile = join(CWD,entry.getKey());
-            try{
+            try {
                 trackedFile.createNewFile();
                 writeContents(trackedFile,blobHashToContent(entry.getValue()));
-            }catch(IOException e){
+            }catch(IOException e) {
                 throw new RuntimeException(e);
             }
         }
     }
-    private static void untrackedFileErrorWithoutDelete(String currentHash,String targetHash){
+    private static void untrackedFileErrorWithoutDelete(String currentHash,String targetHash) {
         /*清除current文件，恢复target文件*/
         Commit target = readObject(join(COMMIT_DIR,targetHash),Commit.class);
         TreeMap<String,String> targetData = target.getData();
@@ -216,15 +219,15 @@ public class Repository {
         Commit head = readObject(join(COMMIT_DIR,currentHash),Commit.class);
         TreeMap<String,String> headData = head.getData();
         /*会被覆盖的文件报的错误*/
-        for(String targetFileName :targetData.keySet()){
+        for(String targetFileName :targetData.keySet()) {
             File f = join(CWD,targetFileName);
-            if(f.exists() && !headData.containsKey(targetFileName)){
+            if(f.exists() && !headData.containsKey(targetFileName)) {
                 throw error("There is an untracked file in the way; " +
                         "delete it, or add and commit it first.");
             }
         }
     }
-    private static void untrackedFileError(String currentHash,String targetHash){
+    private static void untrackedFileError(String currentHash,String targetHash) {
         /*清除current文件，恢复target文件*/
         Commit target = readObject(join(COMMIT_DIR,targetHash),Commit.class);
         TreeMap<String,String> targetData = target.getData();
@@ -233,11 +236,13 @@ public class Repository {
         TreeMap<String,String> headData = head.getData();
         /*会被覆盖的文件报的错误*/
         stage = Utils.readObject(STAGE,TreeMap.class);
-        for(String targetFileName :targetData.keySet()){
+        for(String targetFileName :targetData.keySet()) {
             File f = join(CWD,targetFileName);
-            if(f.exists() && !headData.containsKey(targetFileName) && !stage.containsKey(targetFileName)){
-                throw error("There is an untracked file in the way; " +
-                        "delete it, or add and commit it first.");
+            if(f.exists() && !headData.containsKey(targetFileName)
+                    && !stage.containsKey(targetFileName)) {
+                message("There is an untracked file in the way; "
+                        + "delete it, or add and commit it first.");
+                exit(0);
 
             }
         }
@@ -252,7 +257,7 @@ public class Repository {
         Utils.writeObject(REMOVALSTAGE,removalStage);
         /*更新CURBRANCHNAME存放的内容(每次更新改变Head指针的指向分支都要更新)*/
     }
-    private static String seekSplitPoint(String headHash,String branchHash,String branchName){
+    private static String seekSplitPoint(String headHash,String branchHash,String branchName) {
         Commit head = readObject(join(COMMIT_DIR,headHash),Commit.class);
         Commit branch = readObject(join(COMMIT_DIR,branchHash),Commit.class);
         /*集合存储已经访问过的Commit*/
@@ -261,9 +266,9 @@ public class Repository {
         String headPoint = headHash;
         String branchPoint =branchHash;
 
-        while(headPoint !=null || branchPoint != null){
+        while(headPoint !=null || branchPoint != null) {
             /*先head集合的add，看branch集合是否包含*/
-            if(headPoint != null){
+            if(headPoint != null) {
                 visitedHead.add(headPoint);
                 if(visitedBranch.contains(headPoint)) {
                     if(headPoint.equals(branchHash)) {
@@ -274,7 +279,7 @@ public class Repository {
                 }
             }
             /*再branch的add，看head集合是否包含*/
-            if(branchPoint != null){
+            if(branchPoint != null) {
                 visitedBranch.add(branchPoint);
                 if(visitedHead.contains(branchPoint)) {
                     if(branchPoint.equals(branchHash)) {
@@ -286,11 +291,11 @@ public class Repository {
                 }
             }
             /*迭代，指向各自父Commit*/
-            if(head.getParent() != null){
+            if(head.getParent() != null) {
                 headPoint = head.getParent();
                 head = readObject(join(COMMIT_DIR,headPoint),Commit.class);
             }
-            if(branch.getParent() != null){
+            if(branch.getParent() != null) {
                 branchPoint = branch.getParent();
                 branch = readObject(join(COMMIT_DIR,branchPoint),Commit.class);
             }
@@ -299,23 +304,29 @@ public class Repository {
 
         return null;
     }
-    private static void dealConflict(String headDataHash,String branchDataHash,String fileName){
-        Blob headData = readObject(join(BLOB_DIR,headDataHash),Blob.class);
-        Blob branchData = readObject(join(BLOB_DIR,branchDataHash),Blob.class);
+    private static void dealConflict(String headDataHash,String branchDataHash,String fileName) {
+        System.out.println("Encountered a merge conflict.");
         StringBuilder conflictContent = new StringBuilder();
         conflictContent.append("<<<<<<< HEAD\n");
-        if(headData.getContent() != null) {
-            conflictContent.append(headData.getContent());
+        if(headDataHash != null) {
+            Blob headData = readObject(join(BLOB_DIR,headDataHash),Blob.class);
+            if(headData.getContent() != null) {
+                conflictContent.append(headData.getContent());
+            }
         }
         conflictContent.append("=======\n");
-        if(branchData.getContent() != null) {
-            conflictContent.append(branchData.getContent());
+        if(branchDataHash != null) {
+            File branchDataFile = join(BLOB_DIR,branchDataHash);
+            Blob branchData = readObject(join(BLOB_DIR,branchDataHash),Blob.class);
+            if(branchData.getContent() != null) {
+                conflictContent.append(branchData.getContent());
+            }
         }
         conflictContent.append(">>>>>>>\n");
         File f = join(CWD,fileName);
-        try{
+        try {
             f.createNewFile();
-        }catch(IOException e){
+        }catch(IOException e) {
             throw new RuntimeException(e);
         }
         writeContents(f,conflictContent.toString());
@@ -327,31 +338,47 @@ public class Repository {
 
     public static void checkout(String s,String fileName)  {
       if(!Objects.equals(s, "--")){
-          throw error("Incorrect operands.");
+          message("Incorrect operands.");
+          exit(0);
       }
       int signal = 1;
       Commit head = commitHashToCommit(readObject(HEAD,String.class));
       TreeMap<String ,String> data = head.getData();
-      for(Map.Entry<String,String> entry : data.entrySet()){
+      for(Map.Entry<String,String> entry : data.entrySet()) {
           if(entry.getKey().equals(fileName)) {
               File file = join(CWD,fileName);
-              if(!file.exists()) {  try{file.createNewFile();}catch (IOException e){throw new RuntimeException(e);}}
+              if(!file.exists()) {try{ file.createNewFile();}catch (IOException e){ throw new RuntimeException(e);}}
               writeContents(file,blobHashToContent(entry.getValue()));
               signal = 0;
           }
       }
       if(signal == 1) {
-          throw error("File does not exist in that commit.");
+          message("File does not exist in that commit.");
+          exit(0);
       }
     }
 
-    public static void checkout(String commitId,String s,String fileName){
-        if(s != "--"){
-            throw error("Incorrect operands.");
+    private static String findFullCommitId(String abbreviatedId) {
+        List<String> commitList= plainFilenamesIn(COMMIT_DIR);
+        for(String s :commitList){
+            if(s.substring(0,6).equals(abbreviatedId));
+            return s;
+        }
+        return null;
+    }
+
+    public static void checkout(String commitId,String s,String fileName) {
+        if(!Objects.equals(s, "--")){
+            message("Incorrect operands.");
+            exit(0);
         }
         int signal = 1;
         /*错误消息实现在commitHashToCommit中*/
-        Commit commit = commitHashToCommit(commitId);
+        String commitFullId = commitId;
+        if(commitId.length() == 6) {
+            commitFullId =  findFullCommitId(commitId);
+        }
+        Commit commit = commitHashToCommit(commitFullId);
         TreeMap<String ,String> data = commit.getData();
         if(data == null) {return ;}
         for(Map.Entry<String,String> entry : data.entrySet()){
@@ -361,21 +388,22 @@ public class Repository {
                 writeContents(file,blobHashToContent(entry.getValue()));
                 signal = 0;
             }
-            }
+        }
         if(signal == 1) {
-            throw error("File does not exist in that commit.");
+            message("File does not exist in that commit.");
+            exit(0);
         }
-        }
+    }
 
-    public static void checkout(String branchName){
+    public static void checkout(String branchName) {
         /*选中当前分支就直接return*/
-        if(branchName.equals(readObject(CURBRANCHNAME,String.class)) ){
+        if(branchName.equals(readObject(CURBRANCHNAME,String.class))) {
             System.out.println("No need to checkout the current branch.");
             return ;
         }
         /*删除当前Commit所有data，恢复所有branch Commit的data*/
         File branchFile = join(REFS_DIR,branchName);
-        if(!branchFile.exists()){
+        if(!branchFile.exists()) {
             throw error("No such branch exists.");
         }
         String branchHash = readObject(branchFile,String.class);
@@ -405,10 +433,10 @@ public class Repository {
         }
     }
 
-    public static  void globalLog(){
+    public static  void globalLog() {
         List<String> list = Utils.plainFilenamesIn(COMMIT_DIR);
-        if(list != null){
-            for(String s: list){
+        if(list != null) {
+            for(String s: list) {
                 File currentCommitFile = Utils.join(COMMIT_DIR,s);
                 Commit currentCommit = Utils.readObject(currentCommitFile, Commit.class);
                 System.out.println("===");
@@ -420,11 +448,11 @@ public class Repository {
         }
     }
 
-    public static  void find(String message){
+    public static  void find(String message) {
         int signal = 1;
         List<String> list = Utils.plainFilenamesIn(COMMIT_DIR);
-        if(list != null){
-            for(String s: list){
+        if(list != null) {
+            for(String s: list) {
                 File currentCommitFile = Utils.join(COMMIT_DIR,s);
                 Commit currentCommit = Utils.readObject(currentCommitFile, Commit.class);
                 if(currentCommit.getMessage().equals(message)) {
@@ -433,7 +461,7 @@ public class Repository {
                 }
             }
         }
-        if(signal == 1){
+        if(signal == 1) {
             message("Found no commit with that message.");
         }
     }
@@ -454,14 +482,14 @@ public class Repository {
 
         System.out.println("=== Staged Files ===");
         stage = stage = Utils.readObject(STAGE,TreeMap.class);
-        for(String key :stage.keySet()){
+        for(String key :stage.keySet()) {
             System.out.println(key);
         }
         System.out.println();
 
         System.out.println("=== Removed Files ===");
         removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
-        for(String key :removalStage.keySet()){
+        for(String key :removalStage.keySet()) {
             System.out.println(key);
         }
         System.out.println();
@@ -471,16 +499,16 @@ public class Repository {
         System.out.println("=== Untracked Files ===");
     }
 
-    public static void branch(String branchName){
+    public static void branch(String branchName) {
         File branch = Utils.join(REFS_DIR,branchName);
         if(branch.exists()) {
             System.out.println("A branch with that name already exists.");
             return ;
         }
         /*创建指针文件*/
-        try{
+        try {
             branch.createNewFile();
-        }catch (IOException e){
+        }catch (IOException e) {
             throw new RuntimeException(e);
         }
         /*把Head指针的内容写入branch指针*/
@@ -488,43 +516,49 @@ public class Repository {
         Utils.writeObject(branch,Head);
     }
 
-    public static void rmBranch(String branchName){
+    public static void rmBranch(String branchName) {
         File branchFile = join( REFS_DIR,branchName);
-        if(!branchFile.exists()){
-            throw error("A branch with that name does not exist.");
+        if(!branchFile.exists()) {
+            message("A branch with that name does not exist.");
+            exit(0);
         }
         String currentBranchName = readObject(CURBRANCHNAME,String.class);
-        if(currentBranchName.equals(branchName)){
-            throw error("Cannot remove the current branch.");
+        if(currentBranchName.equals(branchName)) {
+            message("Cannot remove the current branch.");
+            exit(0);
         }
         restrictedDelete(branchFile);
     }
 
-    public static void reset(String commitId){
+    public static void reset(String commitId) {
         File commit = join(COMMIT_DIR,commitId);
-        if(!commit.exists()){
-            throw error("No commit with that id exists.");
+        if(!commit.exists()) {
+            message("No commit with that id exists.");
+            exit(0);
         }
         String headHash = readObject(HEAD,String.class);
         untrackedFileError(headHash,commitId);
         updateCurrentBranch();
     }
 
-    public static void merge(String branchName){
+    public static void merge(String branchName) {
         stage = Utils.readObject(STAGE,TreeMap.class);
         removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
-        if(!stage.isEmpty() || !removalStage.isEmpty()){
-            throw error("You have uncommitted changes.");
+        if(!stage.isEmpty() || !removalStage.isEmpty()) {
+            message("You have uncommitted changes.");
+            exit(0);
         }
         /*寻找分裂点splitpoint*/
         String headHash = readObject(HEAD,String.class);
         File branchFile= join(REFS_DIR,branchName);
-        if(!branchFile.exists()){
-            throw error("A branch with that name does not exist.");
+        if(!branchFile.exists()) {
+            message("A branch with that name does not exist.");
+            exit(0);
         }
         String branchHash = readObject(branchFile,String.class);
         if(branchHash.equals(headHash)) {
-            throw error("Cannot merge a branch with itself.");
+            message("Cannot merge a branch with itself.");
+            exit(0);
         }
         String splitPoint = seekSplitPoint(headHash,branchHash,branchName);
         //错误消息会被覆盖的消息
@@ -539,7 +573,7 @@ public class Repository {
         TreeMap<String,String> headData = head.getData();
         TreeMap<String,String> branchData = branch.getData();
 
-        for(Map.Entry<String,String> entry: branchData.entrySet()){
+        for(Map.Entry<String,String> entry: branchData.entrySet()) {
                 //head的key对应的blobFile的hash值(values)
                 String headFileHash = headData.get(entry.getKey());
                 String branchFileHash = entry.getValue();
@@ -548,9 +582,6 @@ public class Repository {
                 if(headData.containsKey(BlobFileName)) {
                     //content同
                     if(headFileHash.equals(branchFileHash)) {
-                        //以下为测试用代码
-                        Blob branchBlob = readObject(join(BLOB_DIR,branchFileHash),Blob.class);
-                        Blob headBlob = readObject(join(BLOB_DIR,headFileHash),Blob.class);
                         stage.put(BlobFileName,branchFileHash);continue;
                     }
                     //content不同
@@ -562,7 +593,7 @@ public class Repository {
                                 checkout(branchHash,"--",BlobFileName);   //head相同，branch不同，保留branch的版本
                                 stage.put(BlobFileName,branchFileHash);
                             }
-                            else if(branchFileHash.equals(spFileHash)){
+                            else if(branchFileHash.equals(spFileHash)) {
                                 checkout(headHash,"--",BlobFileName); //branch相同，head不同，保留branch的版本
                                 stage.put(BlobFileName,headFileHash);
                             }
@@ -576,14 +607,14 @@ public class Repository {
                 /*如果branch包含(正在遍历肯定有)，head不包含这个文件*/
                 else {
                     // sp没有 -->保留有的，此时是branch
-                    if(!spData.containsKey(BlobFileName)){
+                    if(!spData.containsKey(BlobFileName)) {
                         checkout(branchHash,"--",BlobFileName);
                         stage.put(BlobFileName,branchFileHash);
                     }
-                    else{// sp有,且Content相同
-                        if(spData.get(BlobFileName).equals(branchFileHash)){
+                    else {// sp有,且Content相同
+                        if(spData.get(BlobFileName).equals(branchFileHash)) {
                             File deleteFile =join(CWD,BlobFileName);
-                            if(deleteFile.exists()){
+                            if(deleteFile.exists()) {
                                 restrictedDelete(deleteFile);
                             }
                         }
@@ -595,22 +626,22 @@ public class Repository {
                 }
         }
         //一个有一个无，补上head有但branch没有的
-        for(Map.Entry<String,String> entry: headData.entrySet()){
+        for(Map.Entry<String,String> entry: headData.entrySet()) {
             //branch的key对应的blobFile的hash值(values)
             String headFileHash = entry.getValue();
             String branchFileHash = branchData.get(entry.getKey());
             String BlobFileName = entry.getKey();//此时是head的blob文件
-            if(!branchData.containsKey(BlobFileName)){
+            if(!branchData.containsKey(BlobFileName)) {
                 //branch不包含的逻辑体内(逻辑复用上面的部分)
                 // sp没有 -->保留有的，此时是head
-                if(!spData.containsKey(BlobFileName)){
+                if(!spData.containsKey(BlobFileName)) {
                     checkout(headHash,"--",BlobFileName);
                     stage.put(BlobFileName,headFileHash);
                 }
-                else{       // sp有,且Content相同
-                    if(spData.get(BlobFileName).equals(headFileHash)){
+                else {       // sp有,且Content相同
+                    if(spData.get(BlobFileName).equals(headFileHash)) {
                         File deleteFile =join(CWD,BlobFileName);
-                        if(deleteFile.exists()){
+                        if(deleteFile.exists()) {
                             restrictedDelete(deleteFile);
                         }
                     }
@@ -625,8 +656,9 @@ public class Repository {
         String commitMessage = "Merged " + branchName + " into " + readObject(CURBRANCHNAME,String.class) + ".";
         //commit的创建
         removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
-        if(stage.isEmpty()){
-            throw error("No changes added to the commit.");
+        if(stage.isEmpty()) {
+            message("No changes added to the commit.");
+            exit(0);
         }
         String Head = Utils.readObject(HEAD, String.class);
         Commit c = new Commit(commitMessage,Head,branchHash,stage);

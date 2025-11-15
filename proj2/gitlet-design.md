@@ -65,7 +65,7 @@
       - sp没有 -- 冲突
       - sp有，其中一个和sp相同，保留不同的(head相同留branch，branch相同留head)
       - sp有，都不相同 --> 冲突 
-- Name 一个有一个无(branch有)，我还得写head有branch没有的(记)
+- Name 一个有一个无(branch有)，
   1. sp没有 -->保留有的，此时是branch
   2. sp也有 
       - 和sp内容相同，移除 

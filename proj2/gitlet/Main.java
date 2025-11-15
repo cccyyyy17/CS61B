@@ -1,13 +1,10 @@
 package gitlet;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.locks.ReentrantLock;
+
 
 import static gitlet.Repository.GITLET_DIR;
 import static gitlet.Utils.*;
 
-import static gitlet.Repository.CWD;
 
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
@@ -27,128 +24,129 @@ public class Main {
         switch(firstArg) {
             case "init":
                 if (args.length > 1) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
                 Repository.gitinit();
                 break;
             case "add":
                 if (args.length > 2) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
-                if(!GITLET_DIR.exists()){
-                    throw error("Not in an initialized Gitlet directory.");
+                if(!GITLET_DIR.exists()) {
+                    message("Not in an initialized Gitlet directory.");return ;
                 }
-                Repository.add( args[1]);
+                Repository.add(args[1]);
                 break;
             case "commit":
                 if (args.length > 2) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
-                if(!GITLET_DIR.exists()){
-                    throw error("Not in an initialized Gitlet directory.");
+                if(!GITLET_DIR.exists()) {
+                    message("Not in an initialized Gitlet directory.");return ;
                 }
                 Repository.commit(args[1]);
                 break;
             case "rm":
                 if (args.length > 2) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
-                if(!GITLET_DIR.exists()){
-                    throw error("Not in an initialized Gitlet directory.");
+                if(!GITLET_DIR.exists()) {
+                    message("Not in an initialized Gitlet directory.");return ;
                 }
                 Repository.rm(args[1]);
                 break;
             case "checkout":
                 if (args.length > 4) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
-                if(!GITLET_DIR.exists()){
-                    throw error("Not in an initialized Gitlet directory.");
+                if(!GITLET_DIR.exists()) {
+                    message("Not in an initialized Gitlet directory.");return ;
                 }
                 if(args.length == 4) {
                     Repository.checkout(args[1],args[2],args[3]);
                 }
-                else if(args.length == 3){
+                else if(args.length == 3) {
                     Repository.checkout(args[1],args[2]);
                 }
-                else if(args.length == 2){
+                else if(args.length == 2) {
                     Repository.checkout(args[1]);
                 }
                 break;
             case "log":
                 if (args.length > 1) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
-                if(!GITLET_DIR.exists()){
-                    throw error("Not in an initialized Gitlet directory.");
+                if(!GITLET_DIR.exists()) {
+                    message("Not in an initialized Gitlet directory.");return ;
                 }
                 Repository.log();
                 break;
             case "global-log":
                 if (args.length > 1) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
-                if(!GITLET_DIR.exists()){
-                    throw error("Not in an initialized Gitlet directory.");
+                if(!GITLET_DIR.exists()) {
+                    message("Not in an initialized Gitlet directory.");return ;
                 }
                 Repository.globalLog();
                 break;
             case "find":
                 if (args.length > 2) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
-                if(!GITLET_DIR.exists()){
-                    throw error("Not in an initialized Gitlet directory.");
+                if(!GITLET_DIR.exists()) {
+                    message("Not in an initialized Gitlet directory.");return ;
                 }
                 Repository.find(args[1]);
                 break;
             case "status":
                 if (args.length > 1) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
-                if(!GITLET_DIR.exists()){
-                    throw error("Not in an initialized Gitlet directory.");
+                if(!GITLET_DIR.exists()) {
+                    message("Not in an initialized Gitlet directory.");return ;
                 }
                 Repository.status();
                 break;
             case "branch":
                 if (args.length > 2) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
-                if(!GITLET_DIR.exists()){
-                    throw error("Not in an initialized Gitlet directory.");
+                if(!GITLET_DIR.exists()) {
+                    message("Not in an initialized Gitlet directory.");return ;
                 }
                 Repository.branch(args[1]);
                 break;
             case "rm-branch":
                 if (args.length > 2) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
-                if(!GITLET_DIR.exists()){
-                    throw error("Not in an initialized Gitlet directory.");
+                if(!GITLET_DIR.exists()) {
+                    message("Not in an initialized Gitlet directory.");return ;
                 }
                 Repository.rmBranch(args[1]);
                 break;
             case "reset":
                 if (args.length > 2) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
-                if(!GITLET_DIR.exists()){
-                    throw error("Not in an initialized Gitlet directory.");
+                if(!GITLET_DIR.exists()) {
+                    message("Not in an initialized Gitlet directory.");return ;
                 }
                 Repository.reset(args[1]);
                 break;
             case "merge":
                 if (args.length > 2) {
-                    throw error("Incorrect operands.");
+                    message("Incorrect operands.");return ;
                 }
-                if(!GITLET_DIR.exists()){
-                    throw error("Not in an initialized Gitlet directory.");
+                if(!GITLET_DIR.exists()) {
+                    message("Not in an initialized Gitlet directory.");return ;
                 }
                 Repository.merge(args[1]);
                 break;
             default:
-              throw error("No command with that name exists.");
+                message("No command with that name exists.");
+                return ;
 
         }
     }

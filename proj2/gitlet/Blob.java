@@ -5,19 +5,18 @@ import java.io.IOException;
 import java.io.Serializable;
 
 import static gitlet.Repository.BLOB_DIR;
-import static gitlet.Utils.readObject;
 import static gitlet.Utils.writeObject;
 
 public class Blob implements Serializable,Dumpable { // 文件内容
     private String hash;     // 内容的SHA-1哈希值
     private String content;
 
-    public Blob( File f) {
+    public Blob(File f) {
         content = Utils.readContentsAsString(f);
         this.hash = Utils.sha1(content);  // 计算哈希值
     }
 
-    public void saveBlob(){
+    public void saveBlob() {
         File outFile = Utils.join(BLOB_DIR,hash);
         if (!outFile.exists()) {
             try {
@@ -29,10 +28,10 @@ public class Blob implements Serializable,Dumpable { // 文件内容
         writeObject(outFile, this);
     }
 
-    public String getContent(){
+    public String getContent() {
         return content;
     }
-    public String getHash(){
+    public String getHash() {
         return hash;
     }
     @Override
