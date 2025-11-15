@@ -46,8 +46,7 @@ public class Repository {
     public static TreeMap<String,String> removalStage =  new TreeMap<>();
     public static void gitinit()  {
         if(GITLET_DIR.exists()) {
-            error("A Gitlet version-control system " +
-                    "already exists in the current directory.");
+            throw error("A Gitlet version-control system already exists in the current directory.");
         }
         try{
                 GITLET_DIR.mkdir();
@@ -80,26 +79,55 @@ public class Repository {
     public static void add(String fileName){
         File blobFile = Utils.join(CWD,fileName);
         if(!blobFile.exists()) {
-            throw error("File does not exist.");
+            message("File does not exist.");
+            exit(0);
         }
         Blob b = new Blob(blobFile);
         b.saveBlob();
+        String Head = Utils.readObject(HEAD, String.class);
+        Commit curCommit = readObject(join(COMMIT_DIR,Head),Commit.class);
+        TreeMap<String,String> data = curCommit.getData();
+        for(Map.Entry<String,String> entry:data.entrySet()){
+            if(entry.getKey().equals(fileName) && entry.getValue().equals(b.getHash())){
+                return ;
+            }
+        }
         stage = Utils.readObject(STAGE, TreeMap.class);
         stage.put(fileName,b.getHash());
         Utils.writeObject(STAGE,stage);
     }
-
+    private static void addStageToCommit(Commit c){
+        stage = Utils.readObject(STAGE,TreeMap.class);
+        TreeMap<String,String> data = c.getData();
+        for(Map.Entry<String,String> entry:stage.entrySet()){
+            data.put(entry.getKey(),entry.getValue());
+        }
+    }
+    private static void removalStageToCommit(Commit c){
+        removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
+        TreeMap<String,String> data = c.getData();
+        for(Map.Entry<String,String> entry:removalStage.entrySet()){
+            if(data.containsKey(entry.getKey())){
+                data.remove(entry.getKey());
+            }
+        }
+    }
     public static void commit(String message){
         stage = Utils.readObject(STAGE,TreeMap.class);
         removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
         if(stage.isEmpty()){
-            throw error("No changes added to the commit.");
+            message("No changes added to the commit.");
+            exit(0);
         }
         if(message == null){
-            throw error("Please enter a commit message.");
+            message("Please enter a commit message.");
+            exit(0);
         }
         String  Head = Utils.readObject(HEAD, String.class);
-        Commit c = new Commit(message,Head,null,stage);
+        Commit  headCommit = readObject(join(COMMIT_DIR,Head),Commit.class);
+        Commit c = new Commit(message,Head,null,headCommit.getData());
+        addStageToCommit(c);
+        removalStageToCommit(c);
         Head = c.getHash();
         c.saveCommit();
         stage.clear();
@@ -115,7 +143,6 @@ public class Repository {
         int signal = 1;
         stage = Utils.readObject(STAGE,TreeMap.class);
         removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
-        Blob b = new Blob(Utils.join(CWD,fileName));
         if (stage.containsKey(fileName)) {
             stage.remove(fileName);
             signal = 0;
@@ -126,7 +153,7 @@ public class Repository {
         Commit currentCommit = Utils.readObject(currentCommitFile,Commit.class);
         TreeMap<String,String> Date = currentCommit.getData();
         for (Map.Entry<String, String> entry : Date.entrySet()) {
-            if (entry.getKey().equals(b.getHash())) {
+            if (entry.getKey().equals(fileName)) {
                 removalStage.put(entry.getKey(), entry.getValue());
                 File deleteFile = Utils.join(CWD,fileName);
                 Utils.restrictedDelete(deleteFile);
@@ -205,10 +232,10 @@ public class Repository {
         Commit head = readObject(join(COMMIT_DIR,currentHash),Commit.class);
         TreeMap<String,String> headData = head.getData();
         /*会被覆盖的文件报的错误*/
+        stage = Utils.readObject(STAGE,TreeMap.class);
         for(String targetFileName :targetData.keySet()){
             File f = join(CWD,targetFileName);
-            if(f.exists() && !headData.containsKey(targetFileName)){
-                System.out.println(targetFileName+"conflict");
+            if(f.exists() && !headData.containsKey(targetFileName) && !stage.containsKey(targetFileName)){
                 throw error("There is an untracked file in the way; " +
                         "delete it, or add and commit it first.");
 
@@ -299,13 +326,12 @@ public class Repository {
     }
 
     public static void checkout(String s,String fileName)  {
-      if(s != "--"){
+      if(!Objects.equals(s, "--")){
           throw error("Incorrect operands.");
       }
       int signal = 1;
       Commit head = commitHashToCommit(readObject(HEAD,String.class));
       TreeMap<String ,String> data = head.getData();
-      if(data == null) {return ;}
       for(Map.Entry<String,String> entry : data.entrySet()){
           if(entry.getKey().equals(fileName)) {
               File file = join(CWD,fileName);
@@ -604,6 +630,7 @@ public class Repository {
         }
         String Head = Utils.readObject(HEAD, String.class);
         Commit c = new Commit(commitMessage,Head,branchHash,stage);
+        removalStageToCommit(c);
         writeObject(STAGE,stage);
         Head = c.getHash();
         c.saveCommit();

@@ -1,7 +1,7 @@
 # Gitlet Design Document
 ## 任务清单
 - [x] 冲突函数里的println
-- [] merge调用了dump方法
+- [x] merge调用了dump方法
 
 **Name**:Yang
 
@@ -42,6 +42,11 @@
 * 读当前分支名称`String currentBranch = readObject(CURBRANCHNAME,String.class)`
 - 暂存区`stage = Utils.readObject(STAGE,TreeMap.class);`
 + 暂存移除区`removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);`
++ for(Map.Entry<String,String> entry:data.entrySet())
++ TreeMap<String,String> data = c.getData();
++ removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
+  removalStage.clear();
+  Utils.writeObject(REMOVALSTAGE,removalStage);
 ### 取Commit类代码
 + 读取Head指针对应的文件`File currentCommitFile = Utils.join(COMMIT_DIR,Head);`
 - 读取Head所指的Commit对象`Commit currentCommit = Utils.readObject(currentCommitFile,Commit.class);`
@@ -67,9 +72,7 @@
       - 和sp也不同 -->冲突
 - Name 都没有 -->保持现状(遍历时不会经过)(不用遍历)
 
-removalStage = Utils.readObject(REMOVALSTAGE,TreeMap.class);
-removalStage.clear();
-Utils.writeObject(REMOVALSTAGE,removalStage);
+
 
 
 ## Algorithms

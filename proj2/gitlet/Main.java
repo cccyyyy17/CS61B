@@ -66,10 +66,10 @@ public class Main {
                     throw error("Not in an initialized Gitlet directory.");
                 }
                 if(args.length == 4) {
-                    Repository.checkout(args[1],null,args[3]);
+                    Repository.checkout(args[1],args[2],args[3]);
                 }
                 else if(args.length == 3){
-                    Repository.checkout(null,args[2]);
+                    Repository.checkout(args[1],args[2]);
                 }
                 else if(args.length == 2){
                     Repository.checkout(args[1]);
