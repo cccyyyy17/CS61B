@@ -285,7 +285,8 @@ public class Repository {
 
         initializeLists(headHash, branchHash, headList, branchList);
 
-        return findCommonAncestor(headList, branchList, visitedHead, visitedBranch, headHash, branchHash, branchName);
+        return findCommonAncestor(headList, branchList,
+                visitedHead, visitedBranch, headHash, branchHash, branchName);
     }
 
     private static void initializeLists(String headHash, String branchHash,
@@ -295,8 +296,8 @@ public class Repository {
     }
 
     private static String findCommonAncestor(List<String> headList, List<String> branchList,
-                                             Set<String> visitedHead, Set<String> visitedBranch,
-                                             String headHash, String branchHash, String branchName) {
+                            Set<String> visitedHead, Set<String> visitedBranch,
+                            String headHash, String branchHash, String branchName) {
         int headIndex = 0;
         int branchIndex = 0;
 
@@ -355,7 +356,8 @@ public class Repository {
         visitedBranch.add(currentBranch);
 
         if (visitedHead.contains(currentBranch)) {
-            return handleFoundCommonAncestor(currentBranch, headHash, branchHash, branchName, false);
+            return handleFoundCommonAncestor(currentBranch,
+                  headHash, branchHash, branchName, false);
         }
 
         addParentCommits(currentBranch, branchList);
@@ -710,8 +712,8 @@ public class Repository {
     }
 
     private static void handleBothBranchesHaveFile(String fileName, String headHashValue,
-                                                   String branchHashValue, String headHash,
-                                                   String branchHash, TreeMap<String, String> spData) {
+                     String branchHashValue, String headHash,
+                     String branchHash, TreeMap<String, String> spData) {
         if (headHashValue.equals(branchHashValue)) {
             stage.put(fileName, branchHashValue);
             return;
@@ -778,7 +780,8 @@ public class Repository {
     }
 
     private static void createMergeCommit(String branchName, String branchHash) {
-        String commitMessage = "Merged " + branchName + " into " + readObject(CURBRANCHNAME, String.class) + ".";
+        String commitMessage = "Merged " + branchName + " into "
+                + readObject(CURBRANCHNAME, String.class) + ".";
 
         removalStage = Utils.readObject(REMOVALSTAGE, TreeMap.class);
         if (stage.isEmpty()) {
