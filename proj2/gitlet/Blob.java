@@ -7,7 +7,7 @@ import java.io.Serializable;
 import static gitlet.Repository.BLOB_DIR;
 import static gitlet.Utils.writeObject;
 
-public class Blob implements Serializable,Dumpable { // 文件内容
+public class Blob implements Serializable, Dumpable { // 文件内容
     private String hash;     // 内容的SHA-1哈希值
     private String content;
 
@@ -17,7 +17,7 @@ public class Blob implements Serializable,Dumpable { // 文件内容
     }
 
     public void saveBlob() {
-        File outFile = Utils.join(BLOB_DIR,hash);
+        File outFile = Utils.join(BLOB_DIR, hash);
         if (!outFile.exists()) {
             try {
                 outFile.createNewFile();
@@ -36,6 +36,6 @@ public class Blob implements Serializable,Dumpable { // 文件内容
     }
     @Override
     public void dump() {
-        System.out.printf("content:%s%n",content);
+        System.out.printf("content:%s%n", content);
     }
 }
