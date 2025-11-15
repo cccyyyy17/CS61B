@@ -33,8 +33,7 @@ public class Commit implements Serializable, Dumpable {
         data = d;
         if (p1 == null) {
             timestamp = new Date(0L);
-        }
-        else {
+        } else {
             timestamp = new Date();
         }
     }
@@ -76,6 +75,9 @@ public class Commit implements Serializable, Dumpable {
     }
     public String getParent() {
         return parent;
+    }
+    public String getSecondParent(){
+        return parent2;
     }
     public TreeMap<String, String> getData() {
         return data;

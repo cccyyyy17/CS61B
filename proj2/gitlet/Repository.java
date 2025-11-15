@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.ArrayList;
 
 import static gitlet.Utils.*;
 import static java.lang.System.exit;
@@ -273,46 +274,96 @@ public class Repository {
     }
 
     private static String seekSplitPoint(String headHash, String branchHash, String branchName) {
-        Commit head = readObject(join(COMMIT_DIR, headHash), Commit.class);
-        Commit branch = readObject(join(COMMIT_DIR, branchHash), Commit.class);
-        /*集合存储已经访问过的Commit*/
+        if (headHash == null || branchHash == null) {
+            return null;
+        }
+
         Set<String> visitedHead = new HashSet<>();
         Set<String> visitedBranch = new HashSet<>();
-        String headPoint = headHash;
-        String branchPoint = branchHash;
 
-        while (headPoint != null || branchPoint != null) {
-            /*先head集合的add，看branch集合是否包含*/
-            if (headPoint != null) {
-                visitedHead.add(headPoint);
-                if (visitedBranch.contains(headPoint)) {
-                    if (headPoint.equals(branchHash)) {
+        List<String> headList = new ArrayList<>();
+        List<String> branchList = new ArrayList<>();
+
+        headList.add(headHash);
+        branchList.add(branchHash);
+
+        int headIndex = 0;
+        int branchIndex = 0;
+
+        while (headIndex < headList.size() || branchIndex < branchList.size()) {
+            // 处理head侧的提交
+            if (headIndex < headList.size()) {
+                String currentHead = headList.get(headIndex);
+                headIndex++;
+
+                if (currentHead == null) continue;
+                if (visitedHead.contains(currentHead)) continue;
+
+                visitedHead.add(currentHead);
+
+                if (visitedBranch.contains(currentHead)) {
+                    if (currentHead.equals(branchHash)) {
                         message("Given branch is an ancestor of the current branch.");
                         exit(0);
                     }
-                    return headPoint;
+                    return currentHead;
+                }
+
+                // 安全地获取父节点
+                try {
+                    File commitFile = join(COMMIT_DIR, currentHead);
+                    if (commitFile.exists()) {
+                        Commit headCommit = readObject(commitFile, Commit.class);
+                        if (headCommit != null) {
+                            if (headCommit.getParent() != null) {
+                                headList.add(headCommit.getParent());
+                            }
+                            if (headCommit.getSecondParent() != null) {
+                                headList.add(headCommit.getSecondParent());
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    // 忽略读取错误，继续处理
                 }
             }
-            /*再branch的add，看head集合是否包含*/
-            if (branchPoint != null) {
-                visitedBranch.add(branchPoint);
-                if (visitedHead.contains(branchPoint)) {
-                    if (branchPoint.equals(headHash)) {
+
+            // 处理branch侧的提交
+            if (branchIndex < branchList.size()) {
+                String currentBranch = branchList.get(branchIndex);
+                branchIndex++;
+
+                if (currentBranch == null) continue;
+                if (visitedBranch.contains(currentBranch)) continue;
+
+                visitedBranch.add(currentBranch);
+
+                if (visitedHead.contains(currentBranch)) {
+                    if (currentBranch.equals(headHash)) {
                         message("Current branch fast-forwarded.");
                         checkout(branchName);
                         exit(0);
                     }
-                    return branchPoint;
+                    return currentBranch;
                 }
-            }
-            /*迭代，指向各自父Commit*/
-            if (head.getParent() != null) {
-                headPoint = head.getParent();
-                head = readObject(join(COMMIT_DIR, headPoint), Commit.class);
-            }
-            if (branch.getParent() != null) {
-                branchPoint = branch.getParent();
-                branch = readObject(join(COMMIT_DIR, branchPoint), Commit.class);
+
+                // 安全地获取父节点
+                try {
+                    File commitFile = join(COMMIT_DIR, currentBranch);
+                    if (commitFile.exists()) {
+                        Commit branchCommit = readObject(commitFile, Commit.class);
+                        if (branchCommit != null) {
+                            if (branchCommit.getParent() != null) {
+                                branchList.add(branchCommit.getParent());
+                            }
+                            if (branchCommit.getSecondParent() != null) {
+                                branchList.add(branchCommit.getSecondParent());
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    // 忽略读取错误，继续处理
+                }
             }
         }
         return null;
@@ -378,8 +429,9 @@ public class Repository {
 
     private static String findFullCommitId(String abbreviatedId) {
         List<String> commitList = plainFilenamesIn(COMMIT_DIR);
+        int length = abbreviatedId.length();
         for (String s : commitList) {
-            if (s.substring(0, 6).equals(abbreviatedId)) {
+            if (s.substring(0, length).equals(abbreviatedId)) {
                 return s;
             }
         }
@@ -431,7 +483,8 @@ public class Repository {
         /*删除当前Commit所有data，恢复所有branch Commit的data*/
         File branchFile = join(REFS_DIR, branchName);
         if (!branchFile.exists()) {
-            throw error("No such branch exists.");
+            message("No such branch exists.");
+            exit(0);
         }
         String branchHash = readObject(branchFile, String.class);
         String headHash = readObject(HEAD, String.class);
@@ -614,18 +667,18 @@ public class Repository {
                 else {//sp没有
                     if (!spData.containsKey(blobFileName)) {
                         dealConflict(headFileHash, branchFileHash, blobFileName);
-                    }
-                    /*else:sp中也有这个Name。*/
-                    else {
+                    } else {/*else:sp中也有这个Name。*/
                         String spFileHash = spData.get(blobFileName);
                         if (headFileHash.equals(spFileHash)) {
-                            checkout(branchHash, "--", blobFileName);   //head相同，branch不同，保留branch的版本
+                            //head相同，branch不同，保留branch的版本
+                            checkout(branchHash, "--", blobFileName);
                             stage.put(blobFileName, branchFileHash);
                         } else if (branchFileHash.equals(spFileHash)) {
-                            checkout(headHash, "--", blobFileName); //branch相同，head不同，保留branch的版本
+                            //branch相同，head不同，保留branch的版本
+                            checkout(headHash, "--", blobFileName);
                             stage.put(blobFileName, headFileHash);
-                        } else {
-                            dealConflict(headFileHash, branchFileHash, blobFileName);// sp有，都不相同 --> 冲突
+                        } else {// sp有，都不相同 --> 冲突
+                            dealConflict(headFileHash, branchFileHash, blobFileName);
                         }
                     }
                 }
